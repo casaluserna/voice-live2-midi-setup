@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VoiceLive 2 Controller</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #121212;
+      color: #fff;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      user-select: none;
+    }
+    h1 { font-size: 1.3rem; margin-bottom: 8px; }
+    #status {
+      font-size: 0.85rem;
+      padding: 6px 12px;
+      border-radius: 20px;
+      background: #333;
+      margin-bottom: 20px;
+    }
+    .connected { background: #2e7d32 !important; }
+    .section-title {
+      align-self: flex-start;
+      font-size: 0.9rem;
+      color: #aaa;
+      margin: 15px 0 8px 0;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      width: 100%;
+      max-width: 400px;
+    }
+    button {
+      background: #252525;
+      color: #fff;
+      border: 1px solid #444;
+      border-radius: 10px;
+      padding: 16px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    button:active { background: #444; }
+    /* Pulsanti Effetti (Toggle On/Off) */
+    .btn-toggle.active {
+      background: #0070f3;
+      border-color: #0070f3;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>VoiceLive 2 MIDI</h1>
+  <div id="status">Inizializzazione MIDI...</div>
+
+  <div class="section-title">Preset Rapidi</div>
+  <div class="grid">
+    <button onclick="sendPC(0)">Preset 1</button>
+    <button onclick="sendPC(1)">Preset 2</button>
+    <button onclick="sendPC(2)">Preset 3</button>
+    <button onclick="sendPC(3)">Preset 4</button>
+  </div>
+
+  <div class="section-title">Effetti On/Off</div>
+  <div class="grid">
+    <button class="btn-toggle" id="btn-110" onclick="toggleCC(110)">Harmony</button>
+    <button class="btn-toggle" id="btn-112" onclick="toggleCC(112)">Reverb</button>
+    <button class="btn-toggle" id="btn-117" onclick="toggleCC(117)">Delay</button>
+    <button class="btn-toggle" id="btn-111" onclick="toggleCC(111)">Double</button>
+  </div>
+
+  <script>
+    let midiOutput = null;
+    const effectStates = { 110: false, 112: false, 117: false, 111: false };
+    const MIDI_CHANNEL = 0; // 0 = MIDI Canale 1 (standard TC-Helicon)
+
+    // 1. Richiesta accesso alle periferiche MIDI
+    if (navigator.requestMIDIAccess) {
+      navigator.requestMIDIAccess()
+        .then(onMIDISuccess, onMIDIFailure);
+    } else {
+      document.getElementById('status').innerText = 'Web MIDI non supportato da questo browser';
+    }
+
+    function onMIDISuccess(midiAccess) {
+      // Monitora connessioni/disconnessioni cavi
+      midiAccess.onstatechange = updateOutputs;
+      updateOutputs(midiAccess);
+    }
+
+    function updateOutputs(midiAccess) {
+      const outputs = Array.from(midiAccess.outputs.values());
+      const status = document.getElementById('status');
+
+      if (outputs.length > 0) {
+        // Seleziona la prima interfaccia MIDI rilevata
+        midiOutput = outputs[0];
+        status.innerText = 'Connesso a: ' + midiOutput.name;
+        status.classList.add('connected');
+      } else {
+        midiOutput = null;
+        status.innerText = 'Nessun dispositivo MIDI rilevato';
+        status.classList.remove('connected');
+      }
+    }
+
+    function onMIDIFailure() {
+      document.getElementById('status').innerText = 'Errore accesso MIDI';
+    }
+
+    // 2. Invio Program Change (Cambio Preset)
+    function sendPC(presetIndex) {
+      if (!midiOutput) return alert('Nessun dispositivo MIDI connesso');
+      // 0xC0 = Program Change su Canale 1
+      const pcMessage = [0xC0 + MIDI_CHANNEL, presetIndex];
+      midiOutput.send(pcMessage);
+    }
+
+    // 3. Invio Control Change (Attivazione/Disattivazione Moduli)
+    function toggleCC(ccNumber) {
+      if (!midiOutput) return alert('Nessun dispositivo MIDI connesso');
+
+      // Inverte lo stato locale
+      effectStates[ccNumber] = !effectStates[ccNumber];
+      const val = effectStates[ccNumber] ? 127 : 0; // 127 = On, 0 = Off
+
+      // 0xB0 = Control Change su Canale 1
+      const ccMessage = [0xB0 + MIDI_CHANNEL, ccNumber, val];
+      midiOutput.send(ccMessage);
+
+      // Aggiorna l'interfaccia grafica
+      const btn = document.getElementById('btn-' + ccNumber);
+      if (effectStates[ccNumber]) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    }
+  </script>
+</body>
+</html>
