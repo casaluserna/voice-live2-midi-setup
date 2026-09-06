@@ -2,108 +2,95 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Scaletta & Preset - VoiceLive 2</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Scaletta Canzoni - VoiceLive 2</title>
   <style>
-    body { font-family: system-ui, sans-serif; padding: 20px; background: #121212; color: #fff; }
-    .card { background: #1e1e1e; padding: 20px; border-radius: 8px; margin-bottom: 20px; max-width: 500px; }
-    select, button { padding: 10px; margin: 10px 0; width: 100%; border-radius: 4px; border: none; font-size: 16px; }
-    button { background: #007bff; color: white; cursor: pointer; }
-    button:hover { background: #0056b3; }
-    .status { padding: 8px; font-weight: bold; border-radius: 4px; text-align: center; }
-    .online { background: #28a745; }
-    .offline { background: #dc3545; }
-    a { color: #17a2b8; text-decoration: none; display: inline-block; margin-bottom: 15px; }
+    :root { --bg:#101216; --card:#191c22; --card2:#20242c; --text:#ffffff; --dim:#9da3ad; --green:#25d366; --red:#ff4d4d; --border:#30353f; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--text); font-family:Arial,sans-serif; padding:18px; }
+    .container { max-width:650px; margin:auto; }
+    a.back { color:#3d8bfd; text-decoration:none; display:inline-block; margin-bottom:15px; font-size:14px; }
+    h1 { font-size:22px; margin:0 0 15px; }
+    .section { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; margin-bottom:15px; }
+    label { display:block; margin-bottom:6px; color:var(--dim); font-size:13px; }
+    select, button { width:100%; min-height:48px; border-radius:10px; border:1px solid var(--border); background:var(--card2); color:white; font-size:16px; padding:0 10px; }
+    button { cursor:pointer; font-weight:bold; margin-top:8px; }
+    .connect { background:#26364f; }
+    .log { height:120px; overflow:auto; background:#090b0e; border-radius:10px; padding:10px; font-family:monospace; font-size:12px; color:#bfc5cf; white-space:pre-wrap; }
+    .song-btn { background:#28452f; margin-bottom:8px; }
   </style>
 </head>
 <body>
 
-  <a href="index.html">← Torna al Menu Principale</a>
+<div class="container">
+  <a href="index.html" class="back">← Menu Principale</a>
   <h1>Scaletta Canzoni & Preset</h1>
 
-  <!-- Selezione Interfaccia MIDI -->
-  <div class="card">
-    <h3>1. Configurazione MIDI</h3>
-    <div id="status-badge" class="status offline">MIDI Disconnesso</div>
-    <br>
-    <label for="midi-select">Dispositivo di Uscita (VoiceLive 2):</label>
-    <select id="midi-select" onchange="onOutputChanged(this.value)">
-      <option value="">-- Seleziona Interfaccia --</option>
+  <!-- CONNESSIONE BLE SK-7 -->
+  <div class="section">
+    <label>Connessione BLE SK-7 OUT</label>
+    <button id="btnOut" class="connect" onclick="connectOut()">CONNETTI SK-7 OUT</button>
+  </div>
+
+  <!-- SELEZIONE CANALE MIDI -->
+  <div class="section">
+    <label>Canale MIDI</label>
+    <select id="midiChannel">
+      <option value="0">Canale 1</option>
+      <option value="1">Canale 2</option>
     </select>
   </div>
 
-  <!-- Test Brano A Caso e Selezione Scaletta -->
-  <div class="card">
-    <h3>2. Cambio Preset / Scaletta</h3>
-    
-    <button onclick="playRandomSong()">🎲 Test: Carica Brano a Caso</button>
-    <hr style="border-color: #333; margin: 15px 0;">
+  <!-- BRANO A CASO / PROVA -->
+  <div class="section">
+    <label>Test Rapido</label>
+    <button style="background:#3d8bfd;" onclick="playRandomSong()">🎲 Invia Brano Casuale</button>
+  </div>
 
-    <label for="song-list">Oppure seleziona una canzone della lista:</label>
-    <select id="song-list" onchange="onSongSelected(this.value)">
-      <option value="">-- Scegli Canzone --</option>
-      <option value="1">1. Intro / Acoustic (Preset 1)</option>
+  <!-- SCALETTA BRANI -->
+  <div class="section">
+    <label>Lista Canzoni</label>
+    <select id="songSelect" onchange="onSongChange(this.value)">
+      <option value="">-- Seleziona Brano --</option>
+      <option value="1">1. Acoustic Intro (Preset 1)</option>
       <option value="15">2. Bohemian Rhapsody (Preset 15)</option>
       <option value="42">3. Hotel California (Preset 42)</option>
-      <option value="135">4. Special Harmony (Preset 135 - Banco 2)</option>
+      <option value="135">4. Rock Solo (Preset 135 - Banco 2)</option>
     </select>
-
-    <div id="song-info" style="margin-top: 15px; font-style: italic; color: #aaa;"></div>
   </div>
 
-  <!-- Inclusione del Modulo MIDI -->
-  <script src="midi-core.js"></script>
-  <script>
-    // Lista di brani di prova per il test a caso
-    const sampleSongs = [
-      { title: "Sweet Child O' Mine", preset: 5 },
-      { title: "Hallelujah", preset: 12 },
-      { title: "Wonderwall", preset: 24 },
-      { title: "Superstition", preset: 88 },
-      { title: "Uptown Funk", preset: 130 }
-    ];
+  <!-- LOG MIDI -->
+  <div class="section">
+    <label>LOG MIDI</label>
+    <div id="log" class="log"></div>
+  </div>
+</div>
 
-    // Inizializzazione pagina
-    document.addEventListener("DOMContentLoaded", async () => {
-      const ok = await initMIDI((devices) => {
-        const select = document.getElementById("midi-select");
-        select.innerHTML = '<option value="">-- Seleziona Interfaccia --</option>';
-        devices.forEach(dev => {
-          const opt = document.createElement("option");
-          opt.value = dev.id;
-          opt.textContent = dev.name;
-          select.appendChild(opt);
-        });
-      });
-    });
-
-    function onOutputChanged(deviceId) {
-      selectMIDIOutput(deviceId);
-      const badge = document.getElementById("status-badge");
-      if (deviceId) {
-        badge.textContent = "MIDI ONLINE";
-        badge.className = "status online";
+<script src="midi-core.js"></script>
+<script>
+  function connectOut() {
+    connectOutputSK7((name) => {
+      const btn = document.getElementById("btnOut");
+      if (name) {
+        btn.textContent = "CONNESSO: " + name;
+        btn.style.background = "#28452f";
       } else {
-        badge.textContent = "MIDI Disconnesso";
-        badge.className = "status offline";
+        btn.textContent = "CONNETTI SK-7 OUT";
+        btn.style.background = "#26364f";
       }
-    }
+    });
+  }
 
-    function onSongSelected(presetNumber) {
-      if (!presetNumber) return;
-      const num = parseInt(presetNumber, 10);
-      sendPresetChange(num);
-      document.getElementById("song-info").textContent = `Preset ${num} inviato al VoiceLive 2.`;
-    }
+  function onSongChange(preset) {
+    if (preset) sendPresetChange(parseInt(preset, 10));
+  }
 
-    // Funzione per testare l'invio di un brano casuale
-    function playRandomSong() {
-      const randomSong = sampleSongs[Math.floor(Math.random() * sampleSongs.length)];
-      sendPresetChange(randomSong.preset);
-      
-      document.getElementById("song-info").innerHTML = 
-        `🎵 Canzone Casuale: <b>${randomSong.title}</b><br>Preset inviato: <b>${randomSong.preset}</b>`;
-    }
-  </script>
+  function playRandomSong() {
+    const samplePresets = [1, 15, 42, 88, 135];
+    const rand = samplePresets[Math.floor(Math.random() * samplePresets.length)];
+    sendPresetChange(rand);
+  }
+</script>
+
 </body>
 </html>
