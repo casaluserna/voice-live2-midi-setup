@@ -2,143 +2,215 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0,
+               maximum-scale=1.0,user-scalable=no">
+
 <title>VoiceLive 2 MIDI Controller</title>
 
 <style>
-*{box-sizing:border-box}
+:root{
+  --bg:#101216;
+  --card:#191c22;
+  --card2:#20242c;
+  --text:#ffffff;
+  --dim:#9da3ad;
+  --green:#25d366;
+  --red:#ff4d4d;
+  --blue:#3d8bfd;
+  --yellow:#ffc107;
+  --border:#30353f;
+}
+
+*{
+  box-sizing:border-box;
+}
+
 body{
- margin:0;
- padding:18px;
- background:#101216;
- color:#eee;
- font-family:Arial,sans-serif;
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:Arial,sans-serif;
 }
-.container{max-width:650px;margin:auto}
-h1{text-align:center;font-size:24px;margin:5px 0 18px}
-.panel{
- background:#1c1f26;
- border:1px solid #30343d;
- border-radius:14px;
- padding:14px;
- margin-bottom:14px
+
+.container{
+  max-width:650px;
+  margin:auto;
+  padding:18px;
 }
-.row{
- display:flex;
- align-items:center;
- gap:10px;
- margin-bottom:12px
+
+h1{
+  text-align:center;
+  margin:5px 0 20px;
+  font-size:24px;
 }
-label{color:#9299ad;font-size:14px}
-select{
- flex:1;
- background:#111318;
- color:white;
- border:1px solid #3a3f49;
- border-radius:8px;
- padding:11px;
- font-size:16px
-}
+
 .status{
- padding:7px 10px;
- border-radius:8px;
- background:#a52a2a;
- font-size:13px;
- font-weight:bold;
- white-space:nowrap
+  text-align:center;
+  padding:10px;
+  border-radius:10px;
+  background:#191c22;
+  margin-bottom:15px;
+  font-weight:bold;
 }
-.status.ok{background:#2e8737}
+
+.status.ok{
+  color:var(--green);
+}
+
+.status.error{
+  color:var(--red);
+}
+
+.section{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:14px;
+  margin-bottom:15px;
+}
+
+label{
+  display:block;
+  margin-bottom:6px;
+  color:var(--dim);
+  font-size:13px;
+}
+
+select,
+button{
+  width:100%;
+  min-height:48px;
+  border-radius:10px;
+  border:1px solid var(--border);
+  background:var(--card2);
+  color:white;
+  font-size:16px;
+}
+
+select{
+  padding:0 10px;
+}
+
+button{
+  cursor:pointer;
+  font-weight:bold;
+}
+
+button:active{
+  transform:scale(.98);
+}
+
 .connect{
- width:100%;
- padding:16px;
- border:0;
- border-radius:10px;
- background:#1558b0;
- color:white;
- font-size:17px;
- font-weight:bold
+  margin-top:10px;
+  background:#26364f;
 }
-.connect.ok{background:#267b31}
-.grid{
- display:grid;
- grid-template-columns:1fr 1fr;
- gap:12px
+
+.connect.in{
+  background:#28452f;
 }
+
+.connect:disabled{
+  opacity:.5;
+}
+
+.fx-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
 .fx{
- min-height:125px;
- background:#1c1f26;
- border:2px solid #30343d;
- border-radius:14px;
- color:#eee;
- display:flex;
- flex-direction:column;
- align-items:center;
- justify-content:center;
- text-align:center;
- font-weight:bold
+  position:relative;
+  min-height:100px;
+  padding:12px;
+  border-radius:14px;
+  border:1px solid var(--border);
+  background:var(--card);
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
 }
-.fx:active{transform:scale(.97)}
-.name{font-size:21px}
-.desc{
- color:#9299ad;
- font-size:12px;
- margin-top:7px
+
+.fx-name{
+  font-weight:bold;
+  font-size:17px;
 }
-.dot{
- width:11px;
- height:11px;
- border-radius:50%;
- background:#444;
- margin-top:12px
+
+.cc{
+  font-size:12px;
+  color:var(--dim);
 }
-.fx.on .dot{background:#fff}
-.fx.on{border-color:#fff}
-.off{
- width:100%;
- padding:16px;
- border-radius:10px;
- background:#1c1f26;
- border:1px solid #d22;
- color:#ff8585;
- font-weight:bold;
- font-size:16px
+
+.fx button{
+  min-height:42px;
+  margin-top:8px;
 }
-.onall{
- width:100%;
- padding:16px;
- border-radius:10px;
- background:#1c1f26;
- border:1px solid #444;
- color:white;
- font-weight:bold;
- font-size:16px
+
+.fx.active{
+  border-color:var(--green);
+  box-shadow:0 0 12px rgba(37,211,102,.18);
 }
-.buttons{
- display:grid;
- grid-template-columns:1fr 1fr;
- gap:10px;
- margin-top:10px
+
+.fx.active button{
+  background:var(--green);
+  color:#000;
 }
-.smallbtn{
- padding:12px;
- background:#252932;
- color:white;
- border:1px solid #3b404a;
- border-radius:8px;
- font-weight:bold
+
+.actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
 }
-.monitor{
- margin-top:12px;
- background:#080a0d;
- border:1px solid #343943;
- border-radius:8px;
- padding:10px;
- height:150px;
- overflow:auto;
- font-family:monospace;
- font-size:12px;
- color:#8ee7a0;
- white-space:pre-wrap
+
+.all-off{
+  background:#512222;
+}
+
+.all-on{
+  background:#214e30;
+}
+
+.test{
+  background:#273b5c;
+}
+
+.log{
+  height:180px;
+  overflow:auto;
+  background:#090b0e;
+  border-radius:10px;
+  padding:10px;
+  font-family:monospace;
+  font-size:12px;
+  color:#bfc5cf;
+  white-space:pre-wrap;
+}
+
+.small{
+  font-size:12px;
+  color:var(--dim);
+  margin-top:8px;
+  line-height:1.4;
+}
+
+.badge{
+  display:inline-block;
+  padding:3px 7px;
+  border-radius:6px;
+  font-size:11px;
+  margin-left:5px;
+  background:#333;
+}
+
+.badge.green{
+  background:#1e6035;
+  color:#8cffae;
+}
+
+.badge.yellow{
+  background:#5e4c12;
+  color:#ffe98a;
 }
 </style>
 </head>
@@ -149,22 +221,53 @@ select{
 
 <h1>VoiceLive 2 MIDI Controller</h1>
 
-<div class="panel">
-
-<div class="row">
-<label>Dispositivo:</label>
-
-<select>
-<option>Midi Transceiver</option>
-</select>
-
-<span id="status" class="status">MIDI OFFLINE</span>
+<div id="mainStatus" class="status">
+  MIDI OFFLINE
 </div>
 
-<div class="row">
-<label>Canale MIDI:</label>
+<!-- MIDI OUTPUT -->
 
-<select id="channel">
+<div class="section">
+
+<label>MIDI OUT — SK-7 collegato al MIDI IN del VoiceLive 2</label>
+
+<button id="connectOut"
+        class="connect"
+        onclick="connectOutputSK7()">
+  CONNETTI SK-7 OUT
+</button>
+
+<div id="outInfo" class="small">
+  Non collegato
+</div>
+
+</div>
+
+<!-- MIDI INPUT -->
+
+<div class="section">
+
+<label>MIDI INPUT — SK-7 collegato al MIDI OUT del VoiceLive 2</label>
+
+<button id="connectIn"
+        class="connect in"
+        onclick="connectInputSK7()">
+  CONNETTI SK-7 IN
+</button>
+
+<div id="inInfo" class="small">
+  Feedback MIDI non collegato
+</div>
+
+</div>
+
+<!-- CHANNEL -->
+
+<div class="section">
+
+<label>Canale MIDI</label>
+
+<select id="midiChannel">
 <option value="0">Canale 1</option>
 <option value="1">Canale 2</option>
 <option value="2">Canale 3</option>
@@ -182,648 +285,1067 @@ select{
 <option value="14">Canale 15</option>
 <option value="15">Canale 16</option>
 </select>
+
 </div>
 
-<button id="connect" class="connect" onclick="connectSK7()">
-🔵 CONNETTI SK-7
+<!-- FX -->
+
+<div class="section">
+
+<h2>VoiceLive 2</h2>
+
+<div class="fx-grid">
+
+<!-- HARMONY -->
+
+<div class="fx" id="fx-110">
+
+<div>
+<div class="fx-name">Harmony</div>
+<div class="cc">CC 110</div>
+</div>
+
+<button onclick="toggleFx(110,this)">
+OFF
 </button>
 
 </div>
 
-<div class="grid">
+<!-- DOUBLE -->
 
-<div class="fx" onclick="fx(110,this)">
-<div class="name">Harmony</div>
-<div class="desc">CC 110 • ARMONIE</div>
-<div class="dot"></div>
+<div class="fx" id="fx-111">
+
+<div>
+<div class="fx-name">Double</div>
+<div class="cc">CC 111</div>
 </div>
 
-<div class="fx" onclick="fx(111,this)">
-<div class="name">Double</div>
-<div class="desc">CC 111 • RADDOPPIO</div>
-<div class="dot"></div>
-</div>
-
-<div class="fx" onclick="fx(112,this)">
-<div class="name">Reverb</div>
-<div class="desc">CC 112 • RIVERBERO</div>
-<div class="dot"></div>
-</div>
-
-<div class="fx" onclick="fx(117,this)">
-<div class="name">Delay</div>
-<div class="desc">CC 117 • ECO / DELAY</div>
-<div class="dot"></div>
-</div>
-
-<div class="fx" onclick="fx(116,this)">
-<div class="name">µMod</div>
-<div class="desc">CC 116 • CHORUS / FLANGE</div>
-<div class="dot"></div>
-</div>
-
-<div class="fx" onclick="fx(115,this)">
-<div class="name">Transducer</div>
-<div class="desc">CC 115 • DIST / MEGAFONO</div>
-<div class="dot"></div>
-</div>
-
-<div class="fx" onclick="fx(113,this)">
-<div class="name">HardTune</div>
-<div class="desc">CC 113 • PITCH CORREZIONE</div>
-<div class="dot"></div>
-</div>
-
-<div class="fx" onclick="fx(114,this)">
-<div class="name">Rhythmic</div>
-<div class="desc">CC 114 • STUTTER / TREMOLO</div>
-<div class="dot"></div>
-</div>
-
-</div>
-
-<div class="buttons">
-
-<button class="off" onclick="allOff()">
-TUTTI GLI FX OFF
-</button>
-
-<button class="onall" onclick="allOn()">
-TUTTI GLI FX ON
+<button onclick="toggleFx(111,this)">
+OFF
 </button>
 
 </div>
 
-<div class="panel" style="margin-top:14px">
+<!-- REVERB -->
 
-<b>M-VAVE SK-7 / BLE MIDI</b>
+<div class="fx" id="fx-112">
 
-<div class="buttons">
+<div>
+<div class="fx-name">Reverb</div>
+<div class="cc">CC 112</div>
+</div>
 
-<button class="smallbtn" onclick="connectSK7()">
-🔄 RICONNETTI
+<button onclick="toggleFx(112,this)">
+OFF
 </button>
 
-<button class="smallbtn" onclick="testMIDI()">
-🎹 TEST MIDI
+</div>
+
+<!-- HARDTUNE -->
+
+<div class="fx" id="fx-113">
+
+<div>
+<div class="fx-name">HardTune</div>
+<div class="cc">CC 113</div>
+</div>
+
+<button onclick="toggleFx(113,this)">
+OFF
 </button>
 
 </div>
 
-<div id="monitor" class="monitor">In attesa...</div>
+<!-- UMOD -->
+
+<div class="fx" id="fx-116">
+
+<div>
+<div class="fx-name">µMod</div>
+<div class="cc">CC 116</div>
+</div>
+
+<button onclick="toggleFx(116,this)">
+OFF
+</button>
+
+</div>
+
+<!-- DELAY -->
+
+<div class="fx" id="fx-117">
+
+<div>
+<div class="fx-name">Delay</div>
+<div class="cc">CC 117</div>
+</div>
+
+<button onclick="toggleFx(117,this)">
+OFF
+</button>
+
+</div>
+
+<!-- TRANSDUCER -->
+
+<div class="fx" id="fx-118">
+
+<div>
+<div class="fx-name">Transducer</div>
+<div class="cc">CC 118</div>
+</div>
+
+<button onclick="toggleFx(118,this)">
+OFF
+</button>
+
+</div>
+
+<!-- BYPASS -->
+
+<div class="fx" id="fx-114">
+
+<div>
+<div class="fx-name">Bypass</div>
+<div class="cc">CC 114</div>
+</div>
+
+<button onclick="toggleFx(114,this)">
+OFF
+</button>
 
 </div>
 
 </div>
 
+</div>
+
+<!-- ACTIONS -->
+
+<div class="section">
+
+<div class="actions">
+
+<button class="all-off"
+        onclick="allFxOff()">
+TUTTO OFF
+</button>
+
+<button class="all-on"
+        onclick="allFxOn()">
+TUTTO ON
+</button>
+
+</div>
+
+</div>
+
+<!-- TEST -->
+
+<div class="section">
+
+<button class="test"
+        onclick="testHarmony()">
+TEST HARMONY
+</button>
+
+<div class="small">
+Invia Harmony ON per 1 secondo e poi OFF.
+</div>
+
+</div>
+
+<!-- LOG -->
+
+<div class="section">
+
+<label>LOG MIDI</label>
+
+<div id="log" class="log"></div>
+
+</div>
+
+</div>
 
 <script>
 
-/* =====================================================
-   BLE MIDI STANDARD
-   ===================================================== */
+/* =========================================================
+   BLE MIDI
+   ========================================================= */
 
 const BLE_MIDI_SERVICE =
-"03b80e5a-ede8-4b33-a751-6ce34ec4c700";
+  "03b80e5a-ede8-4b33-a751-6ce34ec4c700";
 
 const BLE_MIDI_CHARACTERISTIC =
-"7772e5db-3868-4112-a1a9-f2669d106bf3";
+  "7772e5db-3868-4112-a1a9-f2669d106bf3";
 
 
-let device = null;
-let server = null;
-let characteristic = null;
-let connected = false;
+/* =========================================================
+   SK-7 OUTPUT
+   Android -> SK7 OUT -> VoiceLive MIDI IN
+   ========================================================= */
+
+let outDevice = null;
+let outServer = null;
+let outCharacteristic = null;
 
 
-/* =====================================================
-   FX
-   ===================================================== */
+/* =========================================================
+   SK-7 INPUT
+   VoiceLive MIDI OUT -> SK7 IN -> Android
+   ========================================================= */
 
-const states = {
-110:false,
-111:false,
-112:false,
-113:false,
-114:false,
-115:false,
-116:false,
-117:false
+let inDevice = null;
+let inServer = null;
+let inCharacteristic = null;
+
+
+/* =========================================================
+   FX STATE
+   ========================================================= */
+
+const fxState = {
+
+  110:false,
+  111:false,
+  112:false,
+  113:false,
+  114:false,
+  116:false,
+  117:false,
+  118:false
+
 };
 
 
-/* =====================================================
-   ELEMENTI
-   ===================================================== */
-
-const status =
-document.getElementById("status");
-
-const connectButton =
-document.getElementById("connect");
-
-const monitor =
-document.getElementById("monitor");
-
-const channel =
-document.getElementById("channel");
-
-
-/* =====================================================
+/* =========================================================
    LOG
-   ===================================================== */
+   ========================================================= */
 
-function log(text){
+function log(message){
 
-if(monitor.textContent === "In attesa...")
- monitor.textContent="";
+  const box = document.getElementById("log");
 
-monitor.textContent +=
-"["+
-new Date().toLocaleTimeString()+
-"] "+
-text+
-"\n";
+  const time =
+    new Date().toLocaleTimeString();
 
-monitor.scrollTop =
-monitor.scrollHeight;
+  box.textContent +=
+    "[" + time + "] " + message + "\n";
+
+  box.scrollTop = box.scrollHeight;
+}
+
+
+/* =========================================================
+   STATUS
+   ========================================================= */
+
+function updateStatus(){
+
+  const status =
+    document.getElementById("mainStatus");
+
+  if(outCharacteristic){
+
+    status.textContent =
+      "MIDI ONLINE";
+
+    status.className =
+      "status ok";
+
+  }else{
+
+    status.textContent =
+      "MIDI OFFLINE";
+
+    status.className =
+      "status";
+
+  }
 
 }
 
 
-/* =====================================================
-   CONNESSIONE SK-7
-   ===================================================== */
+/* =========================================================
+   CONNECT SK-7 OUT
+   ========================================================= */
 
-async function connectSK7(){
+async function connectOutputSK7(){
 
-if(!navigator.bluetooth){
+  try{
 
-alert(
-"❌ Questo browser non supporta Web Bluetooth."
-);
+    log("Ricerca SK-7 OUT...");
 
-return;
-}
+    outDevice =
+      await navigator.bluetooth.requestDevice({
 
-try{
+        filters:[
+          {
+            services:[
+              BLE_MIDI_SERVICE
+            ]
+          }
+        ],
 
-log("🔎 Ricerca M-VAVE SK-7...");
+        optionalServices:[
+          BLE_MIDI_SERVICE
+        ]
 
+      });
 
-device =
-await navigator.bluetooth.requestDevice({
+    log(
+      "SK-7 OUT trovato: " +
+      (outDevice.name || "dispositivo")
+    );
 
-acceptAllDevices:true,
+    outServer =
+      await outDevice.gatt.connect();
 
-optionalServices:[
-BLE_MIDI_SERVICE
-]
+    const service =
+      await outServer.getPrimaryService(
+        BLE_MIDI_SERVICE
+      );
 
-});
+    outCharacteristic =
+      await service.getCharacteristic(
+        BLE_MIDI_CHARACTERISTIC
+      );
 
+    document.getElementById("outInfo").innerHTML =
+      "Connesso: <b>" +
+      (outDevice.name || "SK-7") +
+      "</b> <span class='badge green'>OUT</span>";
 
-log(
-"📱 Trovato: "+
-(device.name || "dispositivo BLE")
-);
+    document.getElementById("connectOut").textContent =
+      "SK-7 OUT CONNESSO";
 
+    log("SK-7 OUT connesso.");
 
-device.addEventListener(
-"gattserverdisconnected",
-disconnected
-);
+    updateStatus();
 
+    outDevice.addEventListener(
+      "gattserverdisconnected",
+      ()=>{
+        outCharacteristic = null;
 
-log("🔗 Connessione GATT...");
+        document.getElementById("outInfo").textContent =
+          "SK-7 OUT disconnesso";
 
+        log("SK-7 OUT disconnesso.");
 
-server =
-await device.gatt.connect();
+        updateStatus();
+      }
+    );
 
+  }catch(error){
 
-log("✅ GATT connesso");
+    console.error(error);
 
+    log(
+      "ERRORE SK-7 OUT: " +
+      error.message
+    );
 
-const service =
-await server.getPrimaryService(
-BLE_MIDI_SERVICE
-);
-
-
-log("✅ Servizio BLE-MIDI trovato");
-
-
-characteristic =
-await service.getCharacteristic(
-BLE_MIDI_CHARACTERISTIC
-);
-
-
-log("✅ Caratteristica MIDI trovata");
-
-
-/*
-   Proviamo ad attivare le notifiche.
-   Non tutti gli SK-7 ne hanno bisogno
-   per l'uscita MIDI.
-*/
-
-try{
-
-await characteristic.startNotifications();
-
-characteristic.addEventListener(
-"characteristicvaluechanged",
-receiveMIDI
-);
-
-log("📥 MIDI IN attivo");
-
-}catch(e){
-
-log(
-"ℹ️ MIDI IN non disponibile"
-);
+  }
 
 }
 
 
-connected=true;
+/* =========================================================
+   CONNECT SK-7 IN
+   ========================================================= */
 
-status.textContent =
-"MIDI ONLINE";
+async function connectInputSK7(){
 
-status.classList.add("ok");
+  try{
 
-connectButton.textContent =
-"🟢 SK-7 CONNESSO";
+    log("Ricerca SK-7 IN...");
 
-connectButton.classList.add("ok");
+    inDevice =
+      await navigator.bluetooth.requestDevice({
+
+        filters:[
+          {
+            services:[
+              BLE_MIDI_SERVICE
+            ]
+          }
+        ],
+
+        optionalServices:[
+          BLE_MIDI_SERVICE
+        ]
+
+      });
+
+    log(
+      "SK-7 IN trovato: " +
+      (inDevice.name || "dispositivo")
+    );
+
+    inServer =
+      await inDevice.gatt.connect();
+
+    const service =
+      await inServer.getPrimaryService(
+        BLE_MIDI_SERVICE
+      );
+
+    inCharacteristic =
+      await service.getCharacteristic(
+        BLE_MIDI_CHARACTERISTIC
+      );
 
 
-log("🎹 M-VAVE SK-7 ONLINE");
+    /* -----------------------------------------
+       ABILITA NOTIFICHE MIDI
+       ----------------------------------------- */
 
-}catch(error){
+    await inCharacteristic.startNotifications();
 
-connected=false;
-
-console.error(error);
-
-status.textContent =
-"MIDI OFFLINE";
-
-status.classList.remove("ok");
-
-connectButton.textContent =
-"🔵 CONNETTI SK-7";
-
-connectButton.classList.remove("ok");
+    inCharacteristic.addEventListener(
+      "characteristicvaluechanged",
+      onBLEMidiMessage
+    );
 
 
-log(
-"❌ ERRORE: "+
-error.message
-);
+    document.getElementById("inInfo").innerHTML =
+      "Connesso: <b>" +
+      (inDevice.name || "SK-7") +
+      "</b> <span class='badge green'>IN</span>";
 
-alert(
-"❌ Connessione fallita:\n\n"+
-error.message
-);
+    document.getElementById("connectIn").textContent =
+      "SK-7 IN CONNESSO";
+
+    log("SK-7 IN connesso.");
+    log("In ascolto del MIDI OUT del VoiceLive 2.");
+
+    inDevice.addEventListener(
+      "gattserverdisconnected",
+      ()=>{
+
+        inCharacteristic = null;
+
+        document.getElementById("inInfo").textContent =
+          "SK-7 IN disconnesso";
+
+        log("SK-7 IN disconnesso.");
+
+      }
+    );
+
+  }catch(error){
+
+    console.error(error);
+
+    log(
+      "ERRORE SK-7 IN: " +
+      error.message
+    );
+
+  }
 
 }
 
-}
 
+/* =========================================================
+   INVIO MIDI CC
+   ========================================================= */
 
-/* =====================================================
-   DISCONNESSIONE
-   ===================================================== */
-
-function disconnected(){
-
-connected=false;
-
-server=null;
-
-characteristic=null;
-
-status.textContent =
-"MIDI OFFLINE";
-
-status.classList.remove("ok");
-
-connectButton.textContent =
-"🔵 CONNETTI SK-7";
-
-connectButton.classList.remove("ok");
-
-log("🔴 SK-7 disconnesso");
-
-}
-
-
-/* =====================================================
-   INVIO CONTROL CHANGE
-   ===================================================== */
-
-async function sendCC(cc,value){
-
-if(!connected || !characteristic){
-
-alert(
-"Collega prima lo SK-7."
-);
-
-return false;
-}
-
-
-const ch =
-parseInt(channel.value);
-
-
-const statusByte =
-0xB0 + ch;
-
-
-/*
-   BLE-MIDI:
-
-   byte 0 = timestamp/header
-   byte 1 = timestamp
-   byte 2 = MIDI status
-   byte 3 = CC
-   byte 4 = valore
-*/
-
-const data =
-new Uint8Array([
-0x80,
-0x80,
-statusByte,
-cc,
-value
-]);
-
-
-try{
-
-if(
-characteristic.writeValueWithoutResponse
+async function sendCC(
+  cc,
+  value
 ){
 
-await characteristic
-.writeValueWithoutResponse(data);
+  const channel =
+    parseInt(
+      document.getElementById("midiChannel").value
+    );
 
-}else{
+  const status =
+    0xB0 + channel;
 
-await characteristic
-.writeValue(data);
-
-}
-
-
-log(
-"OUT → CC "+
-cc+
-" = "+
-value+
-" CH "+
-(ch+1)
-);
-
-return true;
-
-}catch(error){
-
-log(
-"❌ Invio fallito: "+
-error.message
-);
-
-return false;
-
-}
-
-}
+  value =
+    Math.max(
+      0,
+      Math.min(
+        127,
+        value
+      )
+    );
 
 
-/* =====================================================
-   FX
-   ===================================================== */
+  /* -----------------------------------------
+     BLE MIDI packet
+     ----------------------------------------- */
 
-async function fx(cc,element){
+  const timestamp =
+    0x80;
 
-if(!connected){
+  const packet =
+    new Uint8Array([
 
-alert(
-"Collega prima lo SK-7."
-);
+      timestamp,
+      timestamp,
 
-return;
-}
+      status,
+      cc,
+      value
 
-
-states[cc] =
-!states[cc];
-
-
-const value =
-states[cc] ? 127 : 0;
+    ]);
 
 
-const sent =
-await sendCC(cc,value);
+  /* -----------------------------------------
+     SK-7 OUT
+     ----------------------------------------- */
+
+  if(outCharacteristic){
+
+    try{
+
+      if(
+        outCharacteristic.writeValueWithoutResponse
+      ){
+
+        await outCharacteristic
+          .writeValueWithoutResponse(packet);
+
+      }else{
+
+        await outCharacteristic
+          .writeValue(packet);
+
+      }
+
+      log(
+        "OUT  CH" +
+        (channel + 1) +
+        " CC" +
+        cc +
+        " = " +
+        value
+      );
+
+      return true;
+
+    }catch(error){
+
+      log(
+        "Errore invio CC" +
+        cc +
+        ": " +
+        error.message
+      );
+
+      return false;
+
+    }
+
+  }
 
 
-if(sent){
+  /* -----------------------------------------
+     WEB MIDI FALLBACK
+     ----------------------------------------- */
 
-element.classList.toggle(
-"on",
-states[cc]
-);
+  if(
+    typeof navigator.requestMIDIAccess ===
+    "function"
+  ){
 
-}
+    try{
 
-}
+      const midi =
+        await navigator.requestMIDIAccess();
 
+      let sent = false;
 
-/* =====================================================
-   TUTTI OFF
-   ===================================================== */
+      midi.outputs.forEach(
+        output => {
 
-async function allOff(){
+          output.send([
+            status,
+            cc,
+            value
+          ]);
 
-if(!connected){
+          sent = true;
 
-alert(
-"Collega prima lo SK-7."
-);
+        }
+      );
 
-return;
-}
+      if(sent){
 
+        log(
+          "WEB MIDI  CC" +
+          cc +
+          " = " +
+          value
+        );
 
-const cards =
-document.querySelectorAll(".fx");
+        return true;
 
+      }
 
-const ccs =
-[110,111,112,117,116,115,113,114];
+    }catch(error){
 
+      log(
+        "Web MIDI error: " +
+        error.message
+      );
 
-for(let i=0;i<ccs.length;i++){
+    }
 
-states[ccs[i]]=false;
-
-await sendCC(
-ccs[i],
-0
-);
-
-cards[i].classList.remove("on");
-
-}
-
-
-log("🔴 TUTTI GLI FX OFF");
-
-}
-
-
-/* =====================================================
-   TUTTI ON
-   ===================================================== */
-
-async function allOn(){
-
-if(!connected){
-
-alert(
-"Collega prima lo SK-7."
-);
-
-return;
-}
+  }
 
 
-const cards =
-document.querySelectorAll(".fx");
+  log(
+    "Nessuna uscita MIDI disponibile."
+  );
 
-
-const ccs =
-[110,111,112,117,116,115,113,114];
-
-
-for(let i=0;i<ccs.length;i++){
-
-states[ccs[i]]=true;
-
-await sendCC(
-ccs[i],
-127
-);
-
-cards[i].classList.add("on");
+  return false;
 
 }
 
 
-log("🟢 TUTTI GLI FX ON");
+/* =========================================================
+   TOGGLE FX
+   ========================================================= */
+
+async function toggleFx(
+  cc,
+  button
+){
+
+  const newState =
+    !fxState[cc];
+
+  const value =
+    newState ? 127 : 0;
+
+  const sent =
+    await sendCC(
+      cc,
+      value
+    );
+
+  if(!sent){
+
+    return;
+
+  }
+
+  fxState[cc] =
+    newState;
+
+  updateFxUI(
+    cc,
+    newState
+  );
 
 }
 
 
-/* =====================================================
-   TEST MIDI
-   ===================================================== */
+/* =========================================================
+   AGGIORNA UI FX
+   ========================================================= */
 
-async function testMIDI(){
+function updateFxUI(
+  cc,
+  state
+){
 
-if(!connected){
+  const card =
+    document.getElementById(
+      "fx-" + cc
+    );
 
-alert(
-"Collega prima lo SK-7."
-);
+  if(!card){
 
-return;
-}
+    return;
 
+  }
 
-log(
-"🎹 TEST: CC 110 ON"
-);
+  const button =
+    card.querySelector("button");
 
-await sendCC(
-110,
-127
-);
+  if(state){
 
+    card.classList.add("active");
 
-setTimeout(
-async function(){
+    button.textContent =
+      "ON";
 
-log(
-"🎹 TEST: CC 110 OFF"
-);
+  }else{
 
-await sendCC(
-110,
-0
-);
+    card.classList.remove("active");
 
-},
-700
-);
+    button.textContent =
+      "OFF";
+
+  }
 
 }
 
 
-/* =====================================================
-   MIDI IN
-   ===================================================== */
+/* =========================================================
+   TUTTO OFF
+   ========================================================= */
 
-function receiveMIDI(event){
+async function allFxOff(){
 
-const data =
-new Uint8Array(
-event.target.value.buffer
-);
+  const ccs =
+    Object.keys(fxState);
+
+  for(
+    const cc of ccs
+  ){
+
+    await sendCC(
+      parseInt(cc),
+      0
+    );
+
+    fxState[cc] =
+      false;
+
+    updateFxUI(
+      parseInt(cc),
+      false
+    );
+
+  }
+
+  log(
+    "TUTTI GLI FX OFF"
+  );
+
+}
 
 
-const hex =
-Array.from(data)
-.map(
-b=>b.toString(16)
-.padStart(2,"0")
-.toUpperCase()
-)
-.join(" ");
+/* =========================================================
+   TUTTO ON
+   ========================================================= */
 
+async function allFxOn(){
 
-log(
-"IN ← "+
-hex
-);
+  const ccs =
+    Object.keys(fxState);
+
+  for(
+    const cc of ccs
+  ){
+
+    await sendCC(
+      parseInt(cc),
+      127
+    );
+
+    fxState[cc] =
+      true;
+
+    updateFxUI(
+      parseInt(cc),
+      true
+    );
+
+  }
+
+  log(
+    "TUTTI GLI FX ON"
+  );
 
 }
 
 
-/* =====================================================
-   CONTROLLO INIZIALE
-   ===================================================== */
+/* =========================================================
+   TEST HARMONY
+   ========================================================= */
 
-if(!navigator.bluetooth){
+async function testHarmony(){
 
-status.textContent =
-"NO BLE";
+  log(
+    "TEST HARMONY ON"
+  );
 
-log(
-"❌ Web Bluetooth non disponibile."
-);
+  await sendCC(
+    110,
+    127
+  );
+
+  fxState[110] =
+    true;
+
+  updateFxUI(
+    110,
+    true
+  );
+
+  setTimeout(
+    async ()=>{
+
+      log(
+        "TEST HARMONY OFF"
+      );
+
+      await sendCC(
+        110,
+        0
+      );
+
+      fxState[110] =
+        false;
+
+      updateFxUI(
+        110,
+        false
+      );
+
+    },
+    1000
+  );
 
 }
+
+
+/* =========================================================
+   MIDI BLE RECEVUTO
+   ========================================================= */
+
+function onBLEMidiMessage(
+  event
+){
+
+  const data =
+    new Uint8Array(
+      event.target.value.buffer
+    );
+
+  if(
+    data.length < 3
+  ){
+
+    return;
+
+  }
+
+  log(
+    "IN  RAW: " +
+    Array.from(data)
+      .map(
+        x =>
+          x.toString(16)
+           .padStart(2,"0")
+      )
+      .join(" ")
+  );
+
+
+  /*
+   * Cerchiamo un MIDI Control Change
+   *
+   * Status:
+   * B0-BF
+   *
+   * seguito da:
+   * CC number
+   * value
+   */
+
+  for(
+    let i = 2;
+    i < data.length - 2;
+    i++
+  ){
+
+    const byte =
+      data[i];
+
+
+    /*
+     * Control Change
+     */
+
+    if(
+      (byte & 0xF0) === 0xB0
+    ){
+
+      const channel =
+        byte & 0x0F;
+
+      const cc =
+        data[i + 1];
+
+      const value =
+        data[i + 2];
+
+
+      /*
+       * Controlliamo che siano
+       * veri byte MIDI dati
+       */
+
+      if(
+        cc < 128 &&
+        value < 128
+      ){
+
+        processIncomingCC(
+          channel,
+          cc,
+          value
+        );
+
+      }
+
+    }
+
+  }
+
+}
+
+
+/* =========================================================
+   PROCESSA CC RICEVUTO
+   ========================================================= */
+
+function processIncomingCC(
+  channel,
+  cc,
+  value
+){
+
+  log(
+    "IN  CH" +
+    (channel + 1) +
+    " CC" +
+    cc +
+    " = " +
+    value
+  );
+
+
+  /*
+   * FX ON/OFF
+   *
+   * 0-63  = OFF
+   * 64-127 = ON
+   */
+
+  if(
+    Object.prototype.hasOwnProperty
+      .call(
+        fxState,
+        cc
+      )
+  ){
+
+    const state =
+      value >= 64;
+
+    fxState[cc] =
+      state;
+
+    updateFxUI(
+      cc,
+      state
+    );
+
+    log(
+      "VOICE LIVE -> " +
+      getFxName(cc) +
+      " = " +
+      (state ? "ON" : "OFF")
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   NOMI FX
+   ========================================================= */
+
+function getFxName(
+  cc
+){
+
+  const names = {
+
+    110:"Harmony",
+    111:"Double",
+    112:"Reverb",
+    113:"HardTune",
+    114:"Bypass",
+    116:"µMod",
+    117:"Delay",
+    118:"Transducer"
+
+  };
+
+  return names[cc] ||
+         ("CC " + cc);
+
+}
+
+
+/* =========================================================
+   STEP
+   =========================================================
+
+   CC115 NON è un ON/OFF.
+
+   Il VoiceLive 2 usa:
+   0 = Step 1
+   1 = Step 2
+   ecc.
+
+   Per questo non lo inseriamo nei pulsanti ON/OFF.
+   ========================================================= */
+
+function sendStep(
+  step
+){
+
+  sendCC(
+    115,
+    step
+  );
+
+}
+
+
+/* =========================================================
+   INIT
+   ========================================================= */
+
+window.addEventListener(
+  "load",
+  ()=>{
+
+    log(
+      "Pagina caricata."
+    );
+
+    if(
+      !navigator.bluetooth
+    ){
+
+      log(
+        "ATTENZIONE: Web Bluetooth non disponibile."
+      );
+
+    }else{
+
+      log(
+        "Web Bluetooth disponibile."
+      );
+
+    }
+
+  }
+);
 
 </script>
 
