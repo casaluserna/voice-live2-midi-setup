@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scaletta & Preset - VoiceLive 2</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 20px; background: #121212; color: #fff; }
+    .card { background: #1e1e1e; padding: 20px; border-radius: 8px; margin-bottom: 20px; max-width: 500px; }
+    select, button { padding: 10px; margin: 10px 0; width: 100%; border-radius: 4px; border: none; font-size: 16px; }
+    button { background: #007bff; color: white; cursor: pointer; }
+    button:hover { background: #0056b3; }
+    .status { padding: 8px; font-weight: bold; border-radius: 4px; text-align: center; }
+    .online { background: #28a745; }
+    .offline { background: #dc3545; }
+    a { color: #17a2b8; text-decoration: none; display: inline-block; margin-bottom: 15px; }
+  </style>
+</head>
+<body>
+
+  <a href="index.html">← Torna al Menu Principale</a>
+  <h1>Scaletta Canzoni & Preset</h1>
+
+  <!-- Selezione Interfaccia MIDI -->
+  <div class="card">
+    <h3>1. Configurazione MIDI</h3>
+    <div id="status-badge" class="status offline">MIDI Disconnesso</div>
+    <br>
+    <label for="midi-select">Dispositivo di Uscita (VoiceLive 2):</label>
+    <select id="midi-select" onchange="onOutputChanged(this.value)">
+      <option value="">-- Seleziona Interfaccia --</option>
+    </select>
+  </div>
+
+  <!-- Test Brano A Caso e Selezione Scaletta -->
+  <div class="card">
+    <h3>2. Cambio Preset / Scaletta</h3>
+    
+    <button onclick="playRandomSong()">🎲 Test: Carica Brano a Caso</button>
+    <hr style="border-color: #333; margin: 15px 0;">
+
+    <label for="song-list">Oppure seleziona una canzone della lista:</label>
+    <select id="song-list" onchange="onSongSelected(this.value)">
+      <option value="">-- Scegli Canzone --</option>
+      <option value="1">1. Intro / Acoustic (Preset 1)</option>
+      <option value="15">2. Bohemian Rhapsody (Preset 15)</option>
+      <option value="42">3. Hotel California (Preset 42)</option>
+      <option value="135">4. Special Harmony (Preset 135 - Banco 2)</option>
+    </select>
+
+    <div id="song-info" style="margin-top: 15px; font-style: italic; color: #aaa;"></div>
+  </div>
+
+  <!-- Inclusione del Modulo MIDI -->
+  <script src="midi-core.js"></script>
+  <script>
+    // Lista di brani di prova per il test a caso
+    const sampleSongs = [
+      { title: "Sweet Child O' Mine", preset: 5 },
+      { title: "Hallelujah", preset: 12 },
+      { title: "Wonderwall", preset: 24 },
+      { title: "Superstition", preset: 88 },
+      { title: "Uptown Funk", preset: 130 }
+    ];
+
+    // Inizializzazione pagina
+    document.addEventListener("DOMContentLoaded", async () => {
+      const ok = await initMIDI((devices) => {
+        const select = document.getElementById("midi-select");
+        select.innerHTML = '<option value="">-- Seleziona Interfaccia --</option>';
+        devices.forEach(dev => {
+          const opt = document.createElement("option");
+          opt.value = dev.id;
+          opt.textContent = dev.name;
+          select.appendChild(opt);
+        });
+      });
+    });
+
+    function onOutputChanged(deviceId) {
+      selectMIDIOutput(deviceId);
+      const badge = document.getElementById("status-badge");
+      if (deviceId) {
+        badge.textContent = "MIDI ONLINE";
+        badge.className = "status online";
+      } else {
+        badge.textContent = "MIDI Disconnesso";
+        badge.className = "status offline";
+      }
+    }
+
+    function onSongSelected(presetNumber) {
+      if (!presetNumber) return;
+      const num = parseInt(presetNumber, 10);
+      sendPresetChange(num);
+      document.getElementById("song-info").textContent = `Preset ${num} inviato al VoiceLive 2.`;
+    }
+
+    // Funzione per testare l'invio di un brano casuale
+    function playRandomSong() {
+      const randomSong = sampleSongs[Math.floor(Math.random() * sampleSongs.length)];
+      sendPresetChange(randomSong.preset);
+      
+      document.getElementById("song-info").innerHTML = 
+        `🎵 Canzone Casuale: <b>${randomSong.title}</b><br>Preset inviato: <b>${randomSong.preset}</b>`;
+    }
+  </script>
+</body>
+</html>
