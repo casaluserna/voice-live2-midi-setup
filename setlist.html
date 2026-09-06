@@ -5,19 +5,44 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Scaletta Canzoni - VoiceLive 2</title>
   <style>
-    :root { --bg:#101216; --card:#191c22; --card2:#20242c; --text:#ffffff; --dim:#9da3ad; --green:#25d366; --red:#ff4d4d; --border:#30353f; }
+    :root { 
+      --bg:#101216; 
+      --card:#191c22; 
+      --card2:#20242c; 
+      --text:#ffffff; 
+      --dim:#9da3ad; 
+      --green:#25d366; 
+      --red:#ff4d4d; 
+      --blue:#3d8bfd;
+      --border:#30353f; 
+    }
     * { box-sizing:border-box; }
     body { margin:0; background:var(--bg); color:var(--text); font-family:Arial,sans-serif; padding:18px; }
     .container { max-width:650px; margin:auto; }
-    a.back { color:#3d8bfd; text-decoration:none; display:inline-block; margin-bottom:15px; font-size:14px; }
+    a.back { color:var(--blue); text-decoration:none; display:inline-block; margin-bottom:15px; font-size:14px; }
     h1 { font-size:22px; margin:0 0 15px; }
     .section { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; margin-bottom:15px; }
     label { display:block; margin-bottom:6px; color:var(--dim); font-size:13px; }
-    select, button { width:100%; min-height:48px; border-radius:10px; border:1px solid var(--border); background:var(--card2); color:white; font-size:16px; padding:0 10px; }
+    select, input, button { width:100%; min-height:48px; border-radius:10px; border:1px solid var(--border); background:var(--card2); color:white; font-size:16px; padding:0 12px; }
+    input { margin-bottom:10px; }
     button { cursor:pointer; font-weight:bold; margin-top:8px; }
+    button:active { transform:scale(0.98); }
+    
     .connect { background:#26364f; }
+    .btn-add { background:#214e30; color:#8cffae; border-color:#28452f; }
+    .btn-blue { background:var(--blue); }
+    
+    /* Layout griglia per la navigazione Live */
+    .nav-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
+    .btn-nav { min-height:55px; font-size:18px; background:#20242c; border-color:var(--blue); }
+
+    /* Lista brani dinamica */
+    .song-list-item { display:flex; justify-content:space-between; align-items:center; background:var(--card2); padding:10px 14px; border-radius:8px; margin-bottom:8px; border:1px solid var(--border); }
+    .song-info { font-size:15px; }
+    .song-preset-badge { color:var(--blue); font-weight:bold; font-size:13px; margin-left:8px; }
+    .btn-del { background:#512222; color:#ff4d4d; border:none; padding:6px 12px; border-radius:6px; width:auto; min-height:36px; font-size:13px; }
+
     .log { height:120px; overflow:auto; background:#090b0e; border-radius:10px; padding:10px; font-family:monospace; font-size:12px; color:#bfc5cf; white-space:pre-wrap; }
-    .song-btn { background:#28452f; margin-bottom:8px; }
   </style>
 </head>
 <body>
@@ -26,48 +51,70 @@
   <a href="index.html" class="back">← Menu Principale</a>
   <h1>Scaletta Canzoni & Preset</h1>
 
-  <!-- CONNESSIONE BLE SK-7 -->
+  <!-- 1. CONNESSIONE BLE SK-7 -->
   <div class="section">
     <label>Connessione BLE SK-7 OUT</label>
     <button id="btnOut" class="connect" onclick="connectOut()">CONNETTI SK-7 OUT</button>
   </div>
 
-  <!-- SELEZIONE CANALE MIDI -->
+  <!-- 2. CANALE MIDI -->
   <div class="section">
     <label>Canale MIDI</label>
     <select id="midiChannel">
       <option value="0">Canale 1</option>
       <option value="1">Canale 2</option>
+      <option value="2">Canale 3</option>
     </select>
   </div>
 
-  <!-- BRANO A CASO / PROVA -->
+  <!-- 3. ESECUZIONE SCALETTA LIVE -->
   <div class="section">
-    <label>Test Rapido</label>
-    <button style="background:#3d8bfd;" onclick="playRandomSong()">🎲 Invia Brano Casuale</button>
-  </div>
-
-  <!-- SCALETTA BRANI -->
-  <div class="section">
-    <label>Lista Canzoni</label>
+    <label>Esecuzione Scaletta Live</label>
     <select id="songSelect" onchange="onSongChange(this.value)">
       <option value="">-- Seleziona Brano --</option>
-      <option value="1">1. Acoustic Intro (Preset 1)</option>
-      <option value="15">2. Bohemian Rhapsody (Preset 15)</option>
-      <option value="42">3. Hotel California (Preset 42)</option>
-      <option value="135">4. Rock Solo (Preset 135 - Banco 2)</option>
     </select>
+
+    <div class="nav-grid">
+      <button class="btn-nav" onclick="prevSong()">◀ Precedente</button>
+      <button class="btn-nav" onclick="nextSong()">Successiva ▶</button>
+    </div>
   </div>
 
-  <!-- LOG MIDI -->
+  <!-- 4. AGGIUNGI NUOVO BRANO -->
+  <div class="section">
+    <label>Aggiungi Nuovo Brano</label>
+    <input type="text" id="newTitle" placeholder="Titolo Canzone (es. Hotel California)">
+    <input type="number" id="newPreset" placeholder="Numero Preset VoiceLive (es. 42)" min="1" max="384">
+    <button class="btn-add" onclick="addSong()">+ Salva in Scaletta</button>
+  </div>
+
+  <!-- 5. GESTIONE SCALETTA SALVATA -->
+  <div class="section">
+    <label>Brani Memorizzati in Scaletta</label>
+    <div id="songsContainer">
+      <!-- I brani verranno inseriti dinamicamente qui -->
+    </div>
+  </div>
+
+  <!-- 6. LOG MIDI -->
   <div class="section">
     <label>LOG MIDI</label>
     <div id="log" class="log"></div>
   </div>
 </div>
 
+<!-- INCLUSIONE DEL MODULO CONDIVISO MIDI -->
 <script src="midi-core.js"></script>
 <script>
+  // Array per la gestione locale delle canzoni
+  let songs = [];
+
+  // 1. CARICAMENTO ALL'AVVIO
+  window.addEventListener("load", () => {
+    loadSongsFromStorage();
+    renderSongsUI();
+  });
+
   function connectOut() {
     connectOutputSK7((name) => {
       const btn = document.getElementById("btnOut");
@@ -81,14 +128,140 @@
     });
   }
 
-  function onSongChange(preset) {
-    if (preset) sendPresetChange(parseInt(preset, 10));
+  /* =========================================================
+     GESTIONE SALVATAGGIO / LOCALSTORAGE
+     ========================================================= */
+
+  function loadSongsFromStorage() {
+    const saved = localStorage.getItem("voicelive_setlist");
+    if (saved) {
+      try {
+        songs = JSON.parse(saved);
+      } catch (e) {
+        songs = [];
+      }
+    } else {
+      // Scaletta di default se il storage è vuoto
+      songs = [
+        { title: "Intro / Acoustic", preset: 1 },
+        { title: "Bohemian Rhapsody", preset: 15 },
+        { title: "Hotel California", preset: 42 }
+      ];
+      saveSongsToStorage();
+    }
   }
 
-  function playRandomSong() {
-    const samplePresets = [1, 15, 42, 88, 135];
-    const rand = samplePresets[Math.floor(Math.random() * samplePresets.length)];
-    sendPresetChange(rand);
+  function saveSongsToStorage() {
+    localStorage.setItem("voicelive_setlist", JSON.stringify(songs));
+  }
+
+  function renderSongsUI() {
+    const select = document.getElementById("songSelect");
+    const container = document.getElementById("songsContainer");
+
+    // Aggiorna il menu a tendina
+    select.innerHTML = '<option value="">-- Seleziona Brano --</option>';
+    
+    // Aggiorna la lista con pulsante elimina
+    container.innerHTML = "";
+
+    if (songs.length === 0) {
+      container.innerHTML = '<div style="color:var(--dim); font-size:13px;">Nessun brano in scaletta.</div>';
+      return;
+    }
+
+    songs.forEach((song, index) => {
+      // 1. Popola select
+      const opt = document.createElement("option");
+      opt.value = index; // usiamo l'indice come riferimento
+      opt.textContent = `${index + 1}. ${song.title} (Preset ${song.preset})`;
+      select.appendChild(opt);
+
+      // 2. Crea elemento lista
+      const div = document.createElement("div");
+      div.className = "song-list-item";
+      div.innerHTML = `
+        <div class="song-info">
+          <b>${index + 1}. ${song.title}</b>
+          <span class="song-preset-badge">Preset ${song.preset}</span>
+        </div>
+        <button class="btn-del" onclick="deleteSong(${index})">Elimina</button>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  /* =========================================================
+     OPERAZIONI SCALETTA
+     ========================================================= */
+
+  function addSong() {
+    const titleInput = document.getElementById("newTitle");
+    const presetInput = document.getElementById("newPreset");
+
+    const title = titleInput.value.trim();
+    const preset = parseInt(presetInput.value, 10);
+
+    if (!title || isNaN(preset) || preset < 1 || preset > 384) {
+      alert("Inserisci un titolo valido ed un numero di Preset compreso tra 1 e 384.");
+      return;
+    }
+
+    songs.push({ title: title, preset: preset });
+    saveSongsToStorage();
+    renderSongsUI();
+
+    // Pulisce i campi input
+    titleInput.value = "";
+    presetInput.value = "";
+    log(`Aggiunto in scaletta: ${title} (Preset ${preset})`);
+  }
+
+  function deleteSong(index) {
+    if (confirm(`Rimuovere "${songs[index].title}" dalla scaletta?`)) {
+      log(`Rimosso brano: ${songs[index].title}`);
+      songs.splice(index, 1);
+      saveSongsToStorage();
+      renderSongsUI();
+    }
+  }
+
+  function onSongChange(songIndex) {
+    if (songIndex === "") return;
+    const index = parseInt(songIndex, 10);
+    const selectedSong = songs[index];
+    if (selectedSong) {
+      sendPresetChange(selectedSong.preset);
+      log(`SELEZIONATO BRANO: ${selectedSong.title}`);
+    }
+  }
+
+  function prevSong() {
+    const select = document.getElementById("songSelect");
+    let currentIndex = parseInt(select.value, 10);
+
+    if (isNaN(currentIndex) || currentIndex <= 0) {
+      currentIndex = songs.length - 1; // Torna all'ultimo brano
+    } else {
+      currentIndex--;
+    }
+
+    select.value = currentIndex;
+    onSongChange(currentIndex);
+  }
+
+  function nextSong() {
+    const select = document.getElementById("songSelect");
+    let currentIndex = parseInt(select.value, 10);
+
+    if (isNaN(currentIndex) || currentIndex >= songs.length - 1) {
+      currentIndex = 0; // Torna al primo brano
+    } else {
+      currentIndex++;
+    }
+
+    select.value = currentIndex;
+    onSongChange(currentIndex);
   }
 </script>
 
