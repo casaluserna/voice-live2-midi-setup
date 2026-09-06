@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>VoiceLive 2 - Controllo Effetti CC</title>
+
+<style>
+:root{
+  --bg:#101216;
+  --card:#191c22;
+  --card2:#20242c;
+  --text:#ffffff;
+  --dim:#9da3ad;
+  --green:#25d366;
+  --red:#ff4d4d;
+  --blue:#3d8bfd;
+  --border:#30353f;
+}
+
+*{ box-sizing:border-box; }
+
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:Arial,sans-serif;
+  padding:18px;
+}
+
+.container{
+  max-width:650px;
+  margin:auto;
+}
+
+a.back {
+  color:var(--blue);
+  text-decoration:none;
+  display:inline-block;
+  margin-bottom:15px;
+  font-size:14px;
+}
+
+h1{
+  text-align:center;
+  margin:5px 0 20px;
+  font-size:24px;
+}
+
+.status{
+  text-align:center;
+  padding:10px;
+  border-radius:10px;
+  background:#191c22;
+  margin-bottom:15px;
+  font-weight:bold;
+}
+
+.status.ok{ color:var(--green); }
+
+.section{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:14px;
+  margin-bottom:15px;
+}
+
+label{
+  display:block;
+  margin-bottom:6px;
+  color:var(--dim);
+  font-size:13px;
+}
+
+select, button{
+  width:100%;
+  min-height:48px;
+  border-radius:10px;
+  border:1px solid var(--border);
+  background:var(--card2);
+  color:white;
+  font-size:16px;
+  padding:0 10px;
+}
+
+button{
+  cursor:pointer;
+  font-weight:bold;
+}
+
+button:active{ transform:scale(.98); }
+
+.connect{ margin-top:10px; background:#26364f; }
+.connect.in{ background:#28452f; }
+
+.fx-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.fx{
+  position:relative;
+  min-height:100px;
+  padding:12px;
+  border-radius:14px;
+  border:1px solid var(--border);
+  background:var(--card);
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+}
+
+.fx-name{ font-weight:bold; font-size:17px; }
+.cc{ font-size:12px; color:var(--dim); }
+
+.fx button{
+  min-height:42px;
+  margin-top:8px;
+}
+
+.fx.active{
+  border-color:var(--green);
+  box-shadow:0 0 12px rgba(37,211,102,.18);
+}
+
+.fx.active button{
+  background:var(--green);
+  color:#000;
+}
+
+.actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.all-off{ background:#512222; }
+.all-on{ background:#214e30; }
+.test{ background:#273b5c; }
+
+.log{
+  height:180px;
+  overflow:auto;
+  background:#090b0e;
+  border-radius:10px;
+  padding:10px;
+  font-family:monospace;
+  font-size:12px;
+  color:#bfc5cf;
+  white-space:pre-wrap;
+}
+
+.small{
+  font-size:12px;
+  color:var(--dim);
+  margin-top:8px;
+  line-height:1.4;
+}
+
+.badge{
+  display:inline-block;
+  padding:3px 7px;
+  border-radius:6px;
+  font-size:11px;
+  margin-left:5px;
+  background:#333;
+}
+
+.badge.green{ background:#1e6035; color:#8cffae; }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <a href="index.html" class="back">← Menu Principale</a>
+  <h1>Controllo Effetti CC</h1>
+
+  <div id="mainStatus" class="status">MIDI OFFLINE</div>
+
+  <!-- CONNETTI SK-7 OUT -->
+  <div class="section">
+    <label>MIDI OUTPUT — SK-7 collegato al MIDI IN del VoiceLive 2</label>
+    <button id="connectOut" class="connect" onclick="handleConnectOut()">CONNETTI SK-7 OUT</button>
+    <div id="outInfo" class="small">Non collegato</div>
+  </div>
+
+  <!-- CONNETTI SK-7 IN -->
+  <div class="section">
+    <label>MIDI INPUT — SK-7 collegato al MIDI OUT del VoiceLive 2</label>
+    <button id="connectIn" class="connect in" onclick="handleConnectIn()">CONNETTI SK-7 IN</button>
+    <div id="inInfo" class="small">Feedback MIDI non collegato</div>
+  </div>
+
+  <!-- CANALE MIDI -->
+  <div class="section">
+    <label>Canale MIDI</label>
+    <select id="midiChannel">
+      <option value="0">Canale 1</option>
+      <option value="1">Canale 2</option>
+      <option value="2">Canale 3</option>
+      <option value="3">Canale 4</option>
+      <option value="4">Canale 5</option>
+      <option value="5">Canale 6</option>
+      <option value="6">Canale 7</option>
+      <option value="7">Canale 8</option>
+      <option value="8">Canale 9</option>
+      <option value="9">Canale 10</option>
+      <option value="10">Canale 11</option>
+      <option value="11">Canale 12</option>
+      <option value="12">Canale 13</option>
+      <option value="13">Canale 14</option>
+      <option value="14">Canale 15</option>
+      <option value="15">Canale 16</option>
+    </select>
+  </div>
+
+  <!-- GRIGLIA EFFETTI -->
+  <div class="section">
+    <h2>VoiceLive 2</h2>
+    <div class="fx-grid">
+      <div class="fx" id="fx-110">
+        <div><div class="fx-name">Harmony</div><div class="cc">CC 110</div></div>
+        <button onclick="toggleFx(110)">OFF</button>
+      </div>
+
+      <div class="fx" id="fx-111">
+        <div><div class="fx-name">Double</div><div class="cc">CC 111</div></div>
+        <button onclick="toggleFx(111)">OFF</button>
+      </div>
+
+      <div class="fx" id="fx-112">
+        <div><div class="fx-name">Reverb</div><div class="cc">CC 112</div></div>
+        <button onclick="toggleFx(112)">OFF</button>
+      </div>
+
+      <div class="fx" id="fx-113">
+        <div><div class="fx-name">HardTune</div><div class="cc">CC 113</div></div>
+        <button onclick="toggleFx(113)">OFF</button>
+      </div>
+
+      <div class="fx" id="fx-116">
+        <div><div class="fx-name">µMod</div><div class="cc">CC 116</div></div>
+        <button onclick="toggleFx(116)">OFF</button>
+      </div>
+
+      <div class="fx" id="fx-117">
+        <div><div class="fx-name">Delay</div><div class="cc">CC 117</div></div>
+        <button onclick="toggleFx(117)">OFF</button>
+      </div>
+
+      <div class="fx" id="fx-118">
+        <div><div class="fx-name">Transducer</div><div class="cc">CC 118</div></div>
+        <button onclick="toggleFx(118)">OFF</button>
+      </div>
+
+      <div class="fx" id="fx-114">
+        <div><div class="fx-name">Bypass</div><div class="cc">CC 114</div></div>
+        <button onclick="toggleFx(114)">OFF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AZIONI GLOBALI -->
+  <div class="section">
+    <div class="actions">
+      <button class="all-off" onclick="allFxOff()">TUTTO OFF</button>
+      <button class="all-on" onclick="allFxOn()">TUTTO ON</button>
+    </div>
+  </div>
+
+  <!-- TEST -->
+  <div class="section">
+    <button class="test" onclick="testHarmony()">TEST HARMONY</button>
+    <div class="small">Invia Harmony ON per 1 secondo e poi OFF.</div>
+  </div>
+
+  <!-- LOG -->
+  <div class="section">
+    <label>LOG MIDI</label>
+    <div id="log" class="log"></div>
+  </div>
+
+</div>
+
+<!-- INCLUSIONE DEL MODULO CONDIVISO MIDI -->
+<script src="midi-core.js"></script>
+
+<script>
+/* =========================================================
+   GESTIONE UI ED EVENTI LOCALI
+   ========================================================= */
+
+function updateStatusUI(isOnline) {
+  const status = document.getElementById("mainStatus");
+  if (isOnline) {
+    status.textContent = "MIDI ONLINE";
+    status.className = "status ok";
+  } else {
+    status.textContent = "MIDI OFFLINE";
+    status.className = "status";
+  }
+}
+
+async function handleConnectOut() {
+  await connectOutputSK7((deviceName) => {
+    const btn = document.getElementById("connectOut");
+    const info = document.getElementById("outInfo");
+    if (deviceName) {
+      info.innerHTML = `Connesso: <b>${deviceName}</b> <span class='badge green'>OUT</span>`;
+      btn.textContent = "SK-7 OUT CONNESSO";
+      updateStatusUI(true);
+    } else {
+      info.textContent = "SK-7 OUT disconnesso";
+      btn.textContent = "CONNETTI SK-7 OUT";
+      updateStatusUI(false);
+    }
+  });
+}
+
+async function handleConnectIn() {
+  await connectInputSK7((deviceName) => {
+    const btn = document.getElementById("connectIn");
+    const info = document.getElementById("inInfo");
+    if (deviceName) {
+      info.innerHTML = `Connesso: <b>${deviceName}</b> <span class='badge green'>IN</span>`;
+      btn.textContent = "SK-7 IN CONNESSO";
+    } else {
+      info.textContent = "SK-7 IN disconnesso";
+      btn.textContent = "CONNETTI SK-7 IN";
+    }
+  });
+}
+
+// Funzione globale usata da midi-core.js per aggiornare l'interfaccia quando arriva un CC
+function updateFxUI(cc, state) {
+  const card = document.getElementById("fx-" + cc);
+  if (!card) return;
+
+  const button = card.querySelector("button");
+  if (state) {
+    card.classList.add("active");
+    button.textContent = "ON";
+  } else {
+    card.classList.remove("active");
+    button.textContent = "OFF";
+  }
+}
+
+async function toggleFx(cc) {
+  const newState = !fxState[cc];
+  const value = newState ? 127 : 0;
+  const sent = await sendCC(cc, value);
+
+  if (sent) {
+    fxState[cc] = newState;
+    updateFxUI(cc, newState);
+  }
+}
+
+async function allFxOff() {
+  for (const cc of Object.keys(fxState)) {
+    await sendCC(parseInt(cc), 0);
+    fxState[cc] = false;
+    updateFxUI(parseInt(cc), false);
+  }
+  log("TUTTI GLI FX OFF");
+}
+
+async function allFxOn() {
+  for (const cc of Object.keys(fxState)) {
+    await sendCC(parseInt(cc), 127);
+    fxState[cc] = true;
+    updateFxUI(parseInt(cc), true);
+  }
+  log("TUTTI GLI FX ON");
+}
+
+async function testHarmony() {
+  log("TEST HARMONY ON");
+  await sendCC(110, 127);
+  fxState[110] = true;
+  updateFxUI(110, true);
+
+  setTimeout(async () => {
+    log("TEST HARMONY OFF");
+    await sendCC(110, 0);
+    fxState[110] = false;
+    updateFxUI(110, false);
+  }, 1000);
+}
+
+window.addEventListener("load", () => {
+  log("Pagina caricata.");
+  if (!navigator.bluetooth) {
+    log("ATTENZIONE: Web Bluetooth non disponibile.");
+  } else {
+    log("Web Bluetooth disponibile.");
+  }
+});
+</script>
+
+</body>
+</html>
