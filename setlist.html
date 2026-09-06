@@ -31,15 +31,19 @@
     
     .connect { background:#26364f; }
     .btn-add { background:#214e30; color:#8cffae; border-color:#28452f; }
+    .btn-cancel { background:#3a3f4d; color:#ffffff; border-color:var(--border); display:none; }
     .btn-lyrics { background:#3d2b56; color:#d8b4fe; border-color:#5b3e82; display:block; text-align:center; text-decoration:none; line-height:48px; }
     
     .nav-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
     .btn-nav { min-height:55px; font-size:18px; background:#20242c; border-color:var(--blue); }
 
     .song-list-item { display:flex; justify-content:space-between; align-items:center; background:var(--card2); padding:10px 14px; border-radius:8px; margin-bottom:8px; border:1px solid var(--border); }
-    .song-info { font-size:15px; }
+    .song-info { font-size:15px; flex-grow:1; margin-right:10px; }
     .song-preset-badge { color:var(--blue); font-weight:bold; font-size:13px; margin-left:8px; }
-    .btn-del { background:#512222; color:#ff4d4d; border:none; padding:6px 12px; border-radius:6px; width:auto; min-height:36px; font-size:13px; }
+    
+    .action-btns { display:flex; gap:6px; }
+    .btn-edit { background:#284263; color:#7cb3ff; border:none; padding:6px 10px; border-radius:6px; width:auto; min-height:36px; font-size:13px; }
+    .btn-del { background:#512222; color:#ff4d4d; border:none; padding:6px 10px; border-radius:6px; width:auto; min-height:36px; font-size:13px; }
 
     .notes-box { background:#090b0e; border:1px solid var(--border); border-radius:8px; padding:12px; font-size:14px; color:#e2e8f0; white-space:pre-wrap; min-height:60px; margin-top:10px; }
 
@@ -86,13 +90,15 @@
     </div>
   </div>
 
-  <!-- AGGIUNGI BRANO -->
+  <!-- FORM AGGIUNGI / MODIFICA BRANO -->
   <div class="section">
-    <label>Aggiungi Nuovo Brano</label>
+    <label id="formLabel">Aggiungi Nuovo Brano</label>
     <input type="text" id="newTitle" placeholder="Titolo Canzone ed Artista (es. Hotel California - Eagles)">
     <input type="number" id="newPreset" placeholder="Numero Preset VoiceLive (es. 42)" min="1" max="384">
-    <textarea id="newNotes" placeholder="Note personalizzate / Promemoria struttura (opzionale, max 4 righe)"></textarea>
-    <button class="btn-add" onclick="addSong()">+ Salva in Scaletta</button>
+    <textarea id="newNotes" placeholder="Note personalizzate / Promemoria struttura (opzionale)"></textarea>
+    
+    <button id="btnSave" class="btn-add" onclick="saveSong()">+ Salva in Scaletta</button>
+    <button id="btnCancelEdit" class="btn-cancel" onclick="cancelEdit()">Annulla Modifica</button>
   </div>
 
   <!-- GESTIONE BRANI -->
@@ -111,6 +117,7 @@
 <script src="midi-core.js"></script>
 <script>
   let songs = [];
+  let editingIndex = null; // Indica se stiamo modificando un brano esistente
 
   window.addEventListener("load", () => {
     loadSongsFromStorage();
@@ -171,13 +178,20 @@
           <b>${index + 1}. ${song.title}</b>
           <span class="song-preset-badge">Preset ${song.preset}</span>
         </div>
-        <button class="btn-del" onclick="deleteSong(${index})">Elimina</button>
+        <div class="action-btns">
+          <button class="btn-edit" onclick="editSong(${index})">Modifica</button>
+          <button class="btn-del" onclick="deleteSong(${index})">Elimina</button>
+        </div>
       `;
       container.appendChild(div);
     });
   }
 
-  function addSong() {
+  /* =========================================================
+     OPERAZIONI AGGIUNTA / MODIFICA / SALVATAGGIO
+     ========================================================= */
+
+  function saveSong() {
     const titleInput = document.getElementById("newTitle");
     const presetInput = document.getElementById("newPreset");
     const notesInput = document.getElementById("newNotes");
@@ -191,14 +205,50 @@
       return;
     }
 
-    songs.push({ title: title, preset: preset, notes: notes });
+    if (editingIndex !== null) {
+      // Modifica brano esistente
+      songs[editingIndex] = { title: title, preset: preset, notes: notes };
+      log(`Aggiornato: ${title} (Preset ${preset})`);
+    } else {
+      // Aggiungi nuovo brano
+      songs.push({ title: title, preset: preset, notes: notes });
+      log(`Aggiunto: ${title} (Preset ${preset})`);
+    }
+
     saveSongsToStorage();
     renderSongsUI();
+    resetForm();
+  }
 
-    titleInput.value = "";
-    presetInput.value = "";
-    notesInput.value = "";
-    log(`Aggiunto: ${title} (Preset ${preset})`);
+  function editSong(index) {
+    editingIndex = index;
+    const song = songs[index];
+
+    document.getElementById("newTitle").value = song.title;
+    document.getElementById("newPreset").value = song.preset;
+    document.getElementById("newNotes").value = song.notes || "";
+
+    document.getElementById("formLabel").textContent = `Modifica Brano #${index + 1}`;
+    document.getElementById("btnSave").textContent = "✓ Salva Modifiche";
+    document.getElementById("btnCancelEdit").style.display = "block";
+
+    // Scroll dinamico verso il modulo
+    document.getElementById("formLabel").scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function cancelEdit() {
+    resetForm();
+  }
+
+  function resetForm() {
+    editingIndex = null;
+    document.getElementById("newTitle").value = "";
+    document.getElementById("newPreset").value = "";
+    document.getElementById("newNotes").value = "";
+
+    document.getElementById("formLabel").textContent = "Aggiungi Nuovo Brano";
+    document.getElementById("btnSave").textContent = "+ Salva in Scaletta";
+    document.getElementById("btnCancelEdit").style.display = "none";
   }
 
   function deleteSong(index) {
@@ -206,6 +256,7 @@
       songs.splice(index, 1);
       saveSongsToStorage();
       renderSongsUI();
+      if (editingIndex === index) resetForm();
     }
   }
 
@@ -223,17 +274,14 @@
     const selectedSong = songs[index];
 
     if (selectedSong) {
-      // 1. Invio preset MIDI
       sendPresetChange(selectedSong.preset);
       log(`BRANO CARICATO: ${selectedSong.title}`);
 
-      // 2. Aggiornamento link per cercare il testo su Google
       const query = encodeURIComponent(`${selectedSong.title} lyrics testo`);
       lyricsBtn.href = `https://www.google.com/search?q=${query}`;
       lyricsBtn.textContent = `🔍 Cerca testo di "${selectedSong.title}"`;
       lyricsBtn.style.display = "block";
 
-      // 3. Mostra le note o estratti salvati
       if (selectedSong.notes) {
         notesBox.textContent = selectedSong.notes;
         notesBox.style.display = "block";
