@@ -1,5 +1,6 @@
 /* =========================================================
    MIDI CORE - Supporto BLE MIDI (SK-7) + Web MIDI API
+   Modulo condiviso per VoiceLive 2
    ========================================================= */
 
 const BLE_MIDI_SERVICE = "03b80e5a-ede8-4b33-a751-6ce34ec4c700";
@@ -92,7 +93,6 @@ async function connectInputSK7(onSuccess) {
    ========================================================= */
 
 async function sendMidiBytes(bytes) {
-  // Converte in array standard se necessario
   const data = Array.from(bytes);
 
   // 1. Invio tramite BLE SK-7
@@ -131,7 +131,7 @@ async function sendMidiBytes(bytes) {
   return false;
 }
 
-// Invio Control Change (CC)
+// Invio Control Change (CC) per gli effetti
 async function sendCC(cc, value) {
   const channel = parseInt(document.getElementById("midiChannel")?.value || 0, 10);
   const status = 0xB0 + channel;
@@ -142,32 +142,43 @@ async function sendCC(cc, value) {
   return ok;
 }
 
-// Helper per pause asincrone
+// Helper per pausa asincrona
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-// Invio Cambio Preset (Program Change + Bank Select con delay)
+// Invio Cambio Preset (Program Change + Bank Select)
 async function sendPresetChange(presetNumber) {
-  if (presetNumber < 1 || presetNumber > 384) {
-    log("ERRORE: Numero preset deve essere compreso tra 1 e 384");
+  const preset = parseInt(presetNumber, 10);
+
+  if (isNaN(preset) || preset < 1 || preset > 384) {
+    log("ERRORE: Numero preset non valido (deve essere tra 1 e 384)");
     return;
   }
 
   const channel = parseInt(document.getElementById("midiChannel")?.value || 0, 10);
-  const zeroBased = presetNumber - 1;
-  const bank = Math.floor(zeroBased / 128); // CC 0 -> Banco 0, 1 o 2
-  const program = zeroBased % 128;         // PC   -> Indice da 0 a 127
+
+  // Calcolo zero-based (0 - 383)
+  const zeroBased = preset - 1;
+
+  // Calcolo Banco (CC 0): 
+  // Preset 1-128  -> Banco 0
+  // Preset 129-256 -> Banco 1
+  // Preset 257-384 -> Banco 2
+  const bank = Math.floor(zeroBased / 128);
+
+  // Calcolo Program Change (0 - 127)
+  const program = zeroBased % 128;
 
   // 1. Invio Bank Select (CC 0)
   const ccOk = await sendMidiBytes([0xB0 + channel, 0x00, bank]);
 
-  // 2. Pausa tecnica indispensabile per far processare il cambio banco al VoiceLive 2
-  await delay(35);
+  // 2. Pausa indispensabile per permettere al VoiceLive 2 di registrare il cambio banco
+  await delay(40);
 
-  // 3. Invio Program Change
+  // 3. Invio Program Change (PC)
   const pcOk = await sendMidiBytes([0xC0 + channel, program]);
 
   if (ccOk && pcOk) {
-    log(`PRESET INVIATO -> Preset ${presetNumber} [CC0 Banco: ${bank}, PC Program: ${program}]`);
+    log(`PRESET INVIATO -> Preset ${preset} [Banco CC0: ${bank}, Program Change: ${program}]`);
   }
 }
 
