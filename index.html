@@ -2,27 +2,33 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>VoiceLive 2 Control Hub</title>
   <style>
-    body { font-family: system-ui, sans-serif; padding: 20px; background: #121212; color: #fff; text-align: center; }
-    .menu-grid { display: flex; flex-direction: column; gap: 15px; max-width: 400px; margin: 30px auto; }
-    .menu-card { background: #1e1e1e; border: 1px solid #333; padding: 20px; border-radius: 8px; text-decoration: none; color: #fff; font-size: 18px; font-weight: bold; transition: 0.2s; }
-    .menu-card:hover { background: #2a2a2a; border-color: #007bff; }
+    :root { --bg:#101216; --card:#191c22; --border:#30353f; --text:#fff; --blue:#3d8bfd; }
+    body { margin:0; background:var(--bg); color:var(--text); font-family:Arial,sans-serif; padding:20px; text-align:center; }
+    .container { max-width:500px; margin:auto; }
+    h1 { font-size:24px; margin-bottom:10px; }
+    p { color:#9da3ad; font-size:14px; margin-bottom:30px; }
+    .menu-grid { display:flex; flex-direction:column; gap:15px; }
+    .menu-card { background:var(--card); border:1px solid var(--border); padding:20px; border-radius:14px; text-decoration:none; color:var(--text); font-size:18px; font-weight:bold; display:block; transition:0.2s; }
+    .menu-card:active { transform:scale(0.98); background:#20242c; }
   </style>
 </head>
 <body>
 
-  <h1>VoiceLive 2 Controller</h1>
-  <p>Seleziona una funzione per procedere:</p>
+  <div class="container">
+    <h1>VoiceLive 2 Controller</h1>
+    <p>Seleziona il modulo da utilizzare:</p>
 
-  <div class="menu-grid">
-    <a href="setlist.html" class="menu-card">
-      🎵 Scaletta Canzoni & Cambio Preset
-    </a>
-    <a href="effects.html" class="menu-card" style="opacity: 0.6; pointer-events: none;">
-      🎛️ Controllo Effetti CC (Harmony, Delay, ecc.)
-    </a>
+    <div class="menu-grid">
+      <a href="setlist.html" class="menu-card">
+        🎵 Scaletta Canzoni & Cambio Preset
+      </a>
+      <a href="effects.html" class="menu-card">
+        🎛️ Controllo Effetti CC (Harmony, Delay, ecc.)
+      </a>
+    </div>
   </div>
 
 </body>
