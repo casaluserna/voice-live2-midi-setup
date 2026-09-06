@@ -1,1586 +1,315 @@
 <!DOCTYPE html>
 <html lang="it">
-
 <head>
-
 <meta charset="UTF-8">
 
 <meta name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+content="width=device-width,
+initial-scale=1.0,
+maximum-scale=1.0,
+user-scalable=no">
 
 <title>VoiceLive 2 FX Controller</title>
 
 <style>
 
-:root {
-    --bg: #0f1115;
-    --card-bg: #1c1f26;
-    --border: #2e3440;
-    --text: #eceff4;
-    --text-dim: #8892b0;
+:root{
+  --bg:#0f1115;
+  --card:#1c1f26;
+  --border:#303642;
+  --text:#eceff4;
+  --dim:#8892b0;
+  --blue:#1557b0;
+  --green:#2e7d32;
+  --red:#c62828;
 }
 
-* {
-    box-sizing: border-box;
-    touch-action: manipulation;
+*{
+  box-sizing:border-box;
+  touch-action:manipulation;
 }
 
-body {
-
-    margin: 0;
-    padding: 16px;
-
-    font-family:
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        Roboto,
-        sans-serif;
-
-    background: var(--bg);
-    color: var(--text);
-
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-
-    min-height: 100vh;
+body{
+  margin:0;
+  padding:16px;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  min-height:100vh;
 }
 
-header {
-
-    width: 100%;
-    max-width: 480px;
-
-    margin-bottom: 16px;
+header,
+.fx-grid,
+.utility-bar,
+.midi-panel{
+  width:100%;
+  max-width:640px;
 }
 
-h1 {
-
-    margin: 0 0 10px 0;
-
-    font-size: 1.25rem;
-    font-weight: 700;
-
-    text-align: center;
-
-    letter-spacing: 0.5px;
+header{
+  margin-bottom:16px;
 }
 
-.connection-panel {
-
-    background: var(--card-bg);
-
-    border: 1px solid var(--border);
-
-    border-radius: 12px;
-
-    padding: 12px;
-
-    display: flex;
-    flex-direction: column;
-
-    gap: 10px;
+.connection-panel,
+.midi-panel{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:14px;
 }
 
-.row {
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: space-between;
-
-    gap: 10px;
+.connection-panel{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
 }
 
-label {
-
-    font-size: 0.8rem;
-
-    color: var(--text-dim);
+.row{
+  display:flex;
+  align-items:center;
+  gap:10px;
 }
 
-select {
-
-    background: #0d0f12;
-
-    color: var(--text);
-
-    border: 1px solid var(--border);
-
-    border-radius: 6px;
-
-    padding: 6px 10px;
-
-    font-size: 0.85rem;
-
-    outline: none;
-
-    flex-grow: 1;
+label{
+  font-size:.8rem;
+  color:var(--dim);
+  white-space:nowrap;
 }
 
-.badge {
-
-    font-size: 0.75rem;
-
-    padding: 4px 8px;
-
-    border-radius: 6px;
-
-    font-weight: 600;
-
-    background: #c62828;
-
-    color: #fff;
-
-    white-space: nowrap;
+select{
+  background:#0d0f12;
+  color:var(--text);
+  border:1px solid var(--border);
+  border-radius:7px;
+  padding:8px 10px;
+  font-size:.9rem;
+  outline:none;
+  flex:1;
 }
 
-.badge.connected {
-
-    background: #2e7d32;
+.badge{
+  font-size:.75rem;
+  padding:5px 9px;
+  border-radius:7px;
+  font-weight:700;
+  background:var(--red);
+  color:#fff;
+  white-space:nowrap;
 }
 
-/* Pulsante SK7 */
-
-.sk7-bar {
-
-    display: flex;
-
-    gap: 8px;
-
-    width: 100%;
+.badge.connected{
+  background:var(--green);
 }
 
-.sk7-button {
-
-    flex: 1;
-
-    padding: 12px;
-
-    border-radius: 8px;
-
-    border: 1px solid #1565c0;
-
-    background: #0d47a1;
-
-    color: white;
-
-    font-weight: 700;
-
-    font-size: 0.85rem;
-
-    cursor: pointer;
+.btn-connect{
+  width:100%;
+  padding:15px;
+  border:1px solid #1976d2;
+  border-radius:9px;
+  background:#1557b0;
+  color:white;
+  font-weight:800;
+  font-size:.95rem;
+  cursor:pointer;
 }
 
-.sk7-button:active {
-
-    transform: scale(0.97);
+.btn-connect:active{
+  transform:scale(.98);
 }
 
-.sk7-button.disconnect {
-
-    background: #6d1b1b;
-
-    border-color: #b71c1c;
+.btn-connect.connected{
+  background:#246b28;
+  border-color:#3fa345;
 }
 
-/* FX */
-
-.fx-grid {
-
-    display: grid;
-
-    grid-template-columns: repeat(2, 1fr);
-
-    gap: 12px;
-
-    width: 100%;
-
-    max-width: 480px;
-
-    margin-top: 10px;
+.fx-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:12px;
 }
 
-.fx-card {
-
-    background: var(--card-bg);
-
-    border: 2px solid var(--border);
-
-    border-radius: 12px;
-
-    padding: 18px 12px;
-
-    display: flex;
-
-    flex-direction: column;
-
-    align-items: center;
-
-    justify-content: center;
-
-    cursor: pointer;
-
-    user-select: none;
-
-    transition:
-        border-color 0.15s ease,
-        transform 0.05s ease;
+.fx-card{
+  background:var(--card);
+  border:2px solid var(--border);
+  border-radius:13px;
+  padding:22px 10px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  user-select:none;
+  min-height:130px;
+  transition:.12s;
 }
 
-.fx-card:active {
-
-    transform: scale(0.97);
+.fx-card:active{
+  transform:scale(.97);
 }
 
-.fx-card .fx-name {
-
-    font-size: 1.05rem;
-
-    font-weight: 700;
-
-    margin-bottom: 4px;
+.fx-name{
+  font-size:1.1rem;
+  font-weight:700;
+  margin-bottom:5px;
 }
 
-.fx-card .fx-desc {
-
-    font-size: 0.7rem;
-
-    color: var(--text-dim);
-
-    text-transform: uppercase;
-
-    letter-spacing: 0.5px;
-
-    text-align: center;
+.fx-desc{
+  font-size:.7rem;
+  color:var(--dim);
+  text-transform:uppercase;
+  text-align:center;
+  letter-spacing:.4px;
 }
 
-.fx-card .indicator {
-
-    width: 10px;
-
-    height: 10px;
-
-    border-radius: 50%;
-
-    background: #444;
-
-    margin-top: 10px;
+.indicator{
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:#444;
+  margin-top:11px;
 }
 
-.fx-card.active {
-
-    border-color: #fff;
+.fx-card.active{
+  border-color:#fff;
 }
 
-.fx-card.active .indicator {
-
-    box-shadow: 0 0 10px currentColor;
+.color-harmony.active{
+  border-color:#ffd166;
+  color:#ffd166;
 }
 
-/* Colori FX */
-
-.color-harmony.active {
-    border-color: #ffd166;
-    color: #ffd166;
+.color-harmony.active .indicator{
+  background:#ffd166;
 }
 
-.color-harmony.active .indicator {
-    background: #ffd166;
+.color-double.active{
+  border-color:#06d6a0;
+  color:#06d6a0;
 }
 
-.color-double.active {
-    border-color: #06d6a0;
-    color: #06d6a0;
+.color-double.active .indicator{
+  background:#06d6a0;
 }
 
-.color-double.active .indicator {
-    background: #06d6a0;
+.color-reverb.active{
+  border-color:#118ab2;
+  color:#118ab2;
 }
 
-.color-reverb.active {
-    border-color: #118ab2;
-    color: #118ab2;
+.color-reverb.active .indicator{
+  background:#118ab2;
 }
 
-.color-reverb.active .indicator {
-    background: #118ab2;
+.color-delay.active{
+  border-color:#00b4d8;
+  color:#00b4d8;
 }
 
-.color-delay.active {
-    border-color: #00b4d8;
-    color: #00b4d8;
+.color-delay.active .indicator{
+  background:#00b4d8;
 }
 
-.color-delay.active .indicator {
-    background: #00b4d8;
+.color-mod.active{
+  border-color:#b388ff;
+  color:#b388ff;
 }
 
-.color-mod.active {
-    border-color: #b388ff;
-    color: #b388ff;
+.color-mod.active .indicator{
+  background:#b388ff;
 }
 
-.color-mod.active .indicator {
-    background: #b388ff;
+.color-trans.active{
+  border-color:#ef476f;
+  color:#ef476f;
 }
 
-.color-trans.active {
-    border-color: #ef476f;
-    color: #ef476f;
+.color-trans.active .indicator{
+  background:#ef476f;
 }
 
-.color-trans.active .indicator {
-    background: #ef476f;
+.color-tune.active{
+  border-color:#ff9f1c;
+  color:#ff9f1c;
 }
 
-.color-tune.active {
-    border-color: #ff9f1c;
-    color: #ff9f1c;
+.color-tune.active .indicator{
+  background:#ff9f1c;
 }
 
-.color-tune.active .indicator {
-    background: #ff9f1c;
+.color-rhythm.active{
+  border-color:#e040fb;
+  color:#e040fb;
 }
 
-.color-rhythm.active {
-    border-color: #e040fb;
-    color: #e040fb;
+.color-rhythm.active .indicator{
+  background:#e040fb;
 }
 
-.color-rhythm.active .indicator {
-    background: #e040fb;
+.utility-bar{
+  display:flex;
+  gap:12px;
+  margin-top:16px;
 }
 
-/* Utility */
-
-.utility-bar {
-
-    display: flex;
-
-    gap: 12px;
-
-    width: 100%;
-
-    max-width: 480px;
-
-    margin-top: 16px;
+.btn-util{
+  flex:1;
+  padding:15px 8px;
+  border-radius:9px;
+  border:1px solid var(--border);
+  background:var(--card);
+  color:var(--text);
+  font-weight:800;
+  font-size:.82rem;
 }
 
-.btn-util {
-
-    flex: 1;
-
-    padding: 14px;
-
-    border-radius: 8px;
-
-    border: 1px solid var(--border);
-
-    background: var(--card-bg);
-
-    color: var(--text);
-
-    font-weight: 700;
-
-    font-size: 0.85rem;
-
-    cursor: pointer;
+.btn-bypass{
+  border-color:#b71c1c;
+  color:#ff8a80;
 }
 
-.btn-bypass {
-
-    border-color: #b71c1c;
-
-    color: #ff8a80;
+.midi-panel{
+  margin-top:14px;
 }
 
-/* Log */
-
-#log {
-
-    width: 100%;
-
-    max-width: 480px;
-
-    margin-top: 12px;
-
-    padding: 8px;
-
-    background: #090a0d;
-
-    border: 1px solid var(--border);
-
-    border-radius: 8px;
-
-    color: #8bc34a;
-
-    font-size: 0.7rem;
-
-    min-height: 42px;
-
-    word-break: break-word;
+.midi-buttons{
+  display:flex;
+  gap:8px;
+  margin-top:10px;
 }
 
-</style>
-
-</head>
-
-
-<body>
-
-
-<header>
-
-<h1>VoiceLive 2 FX Pad</h1>
-
-
-<div class="connection-panel">
-
-
-<div class="row">
-
-<label>Dispositivo:</label>
-
-<select id="midi-out">
-
-<option>Nessun dispositivo MIDI</option>
-
-</select>
-
-<span id="conn-badge" class="badge">
-
-OFFLINE
-
-</span>
-
-</div>
-
-
-<div class="row">
-
-<label for="midi-chan">
-
-Canale MIDI:
-
-</label>
-
-<select id="midi-chan">
-
-<option value="0" selected>
-Canale 1
-</option>
-
-<option value="1">
-Canale 2
-</option>
-
-<option value="2">
-Canale 3
-</option>
-
-<option value="3">
-Canale 4
-</option>
-
-<option value="15">
-Canale 16
-</option>
-
-</select>
-
-</div>
-
-
-<div class="sk7-bar">
-
-<button
-    id="connect-sk7"
-    class="sk7-button"
-    onclick="connectSK7()">
-
-🔵 CONNETTI SK-7
-
-</button>
-
-</div>
-
-
-</div>
-
-</header>
-
-
-<main class="fx-grid">
-
-
-<div
-    class="fx-card color-harmony"
-    onclick="toggleFx(110, this)">
-
-<span class="fx-name">
-Harmony
-</span>
-
-<span class="fx-desc">
-CC 110 • Armonie
-</span>
-
-<div class="indicator"></div>
-
-</div>
-
-
-<div
-    class="fx-card color-double"
-    onclick="toggleFx(111, this)">
-
-<span class="fx-name">
-Double
-</span>
-
-<span class="fx-desc">
-CC 111 • Raddoppio
-</span>
-
-<div class="indicator"></div>
-
-</div>
-
-
-<div
-    class="fx-card color-reverb"
-    onclick="toggleFx(112, this)">
-
-<span class="fx-name">
-Reverb
-</span>
-
-<span class="fx-desc">
-CC 112 • Riverbero
-</span>
-
-<div class="indicator"></div>
-
-</div>
-
-
-<div
-    class="fx-card color-delay"
-    onclick="toggleFx(117, this)">
-
-<span class="fx-name">
-Delay
-</span>
-
-<span class="fx-desc">
-CC 117 • Eco / Delay
-</span>
-
-<div class="indicator"></div>
-
-</div>
-
-
-<div
-    class="fx-card color-mod"
-    onclick="toggleFx(116, this)">
-
-<span class="fx-name">
-µMod
-</span>
-
-<span class="fx-desc">
-CC 116 • Chorus / Flange
-</span>
-
-<div class="indicator"></div>
-
-</div>
-
-
-<div
-    class="fx-card color-trans"
-    onclick="toggleFx(115, this)">
-
-<span class="fx-name">
-Transducer
-</span>
-
-<span class="fx-desc">
-CC 115 • Dist / Megafono
-</span>
-
-<div class="indicator"></div>
-
-</div>
-
-
-<div
-    class="fx-card color-tune"
-    onclick="toggleFx(113, this)">
-
-<span class="fx-name">
-HardTune
-</span>
-
-<span class="fx-desc">
-CC 113 • Pitch Correzione
-</span>
-
-<div class="indicator"></div>
-
-</div>
-
-
-<div
-    class="fx-card color-rhythm"
-    onclick="toggleFx(114, this)">
-
-<span class="fx-name">
-Rhythmic
-</span>
-
-<span class="fx-desc">
-CC 114 • Stutter / Tremolo
-</span>
-
-<div class="indicator"></div>
-
-</div>
-
-
-</main>
-
-
-<section class="utility-bar">
-
-<button
-    class="btn-util btn-bypass"
-    onclick="allFxOff()">
-
-TUTTI GLI FX OFF
-
-</button>
-
-
-<button
-    class="btn-util"
-    onclick="allFxOn()">
-
-TUTTI GLI FX ON
-
-</button>
-
-</section>
-
-
-<div id="log">
-
-Pronto. Premi CONNETTI SK-7.
-
-</div>
-
-
-<script>
-
-
-/* =====================================================
-   CONFIGURAZIONE BLE MIDI
-   ===================================================== */
-
-const MIDI_SERVICE_UUID =
-    "03B80E5A-EDE8-4B33-A751-6CE34EC4C700";
-
-const MIDI_CHARACTERISTIC_UUID =
-    "7772E5DB-3868-4112-A1A9-F2669D106BF3";
-
-
-/* =====================================================
-   VARIABILI
-   ===================================================== */
-
-let midiAccess = null;
-
-let selectedOutput = null;
-
-let bleDevice = null;
-
-let bleServer = null;
-
-let bleCharacteristic = null;
-
-let bleConnected = false;
-
-
-/* =====================================================
-   FX
-   ===================================================== */
-
-const fxState = {
-
-    110: false,
-    111: false,
-    112: false,
-    113: false,
-    114: false,
-    115: false,
-    116: false,
-    117: false
-
-};
-
-
-const outSelect =
-    document.getElementById("midi-out");
-
-const chanSelect =
-    document.getElementById("midi-chan");
-
-const connBadge =
-    document.getElementById("conn-badge");
-
-const logBox =
-    document.getElementById("log");
-
-const connectButton =
-    document.getElementById("connect-sk7");
-
-
-/* =====================================================
-   LOG
-   ===================================================== */
-
-function log(message) {
-
-    console.log(message);
-
-    logBox.innerText = message;
+.btn-midi{
+  flex:1;
+  padding:11px 5px;
+  border-radius:8px;
+  border:1px solid var(--border);
+  background:var(--card);
+  color:var(--text);
+  font-weight:700;
+  font-size:.75rem;
 }
 
-
-/* =====================================================
-   WEB BLUETOOTH DISPONIBILITÀ
-   ===================================================== */
-
-if (!navigator.bluetooth) {
-
-    log(
-        "⚠️ Web Bluetooth non disponibile in questo browser."
-    );
-
+.monitor{
+  height:150px;
+  overflow-y:auto;
+  background:#080a0d;
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:8px;
+  margin-top:8px;
+  font:12px monospace;
+  color:#9be7ff;
+  white-space:pre-wrap;
 }
 
-
-/* =====================================================
-   CONNESSIONE SK-7
-   ===================================================== */
-
-async function connectSK7() {
-
-    try {
-
-        if (!navigator.bluetooth) {
-
-            alert(
-                "Web Bluetooth non è disponibile. " +
-                "Usa Chrome Android su HTTPS."
-            );
-
-            return;
-        }
-
-
-        log(
-            "🔎 Ricerca dispositivo BLE MIDI..."
-        );
-
-
-        /*
-         * NON filtriamo per nome.
-         *
-         * Cerchiamo direttamente il servizio
-         * BLE MIDI standard.
-         */
-
-        bleDevice =
-            await navigator.bluetooth.requestDevice({
-
-                filters: [
-
-                    {
-                        services: [
-                            MIDI_SERVICE_UUID
-                        ]
-                    }
-
-                ]
-
-            });
-
-
-        log(
-            "📱 Trovato: " +
-            (bleDevice.name || "dispositivo BLE")
-        );
-
-
-        bleDevice.addEventListener(
-            "gattserverdisconnected",
-            onBLEDisconnected
-        );
-
-
-        log(
-            "🔗 Connessione allo SK-7..."
-        );
-
-
-        bleServer =
-            await bleDevice.gatt.connect();
-
-
-        log(
-            "✅ Bluetooth collegato."
-        );
-
-
-        const midiService =
-            await bleServer.getPrimaryService(
-                MIDI_SERVICE_UUID
-            );
-
-
-        log(
-            "🎹 Servizio BLE MIDI trovato."
-        );
-
-
-        bleCharacteristic =
-            await midiService.getCharacteristic(
-                MIDI_CHARACTERISTIC_UUID
-            );
-
-
-        log(
-            "🎛️ MIDI I/O trovato."
-        );
-
-
-        /*
-         * Abilitiamo le notifiche.
-         *
-         * Questo permette anche di ricevere MIDI
-         * dallo SK-7.
-         */
-
-        try {
-
-            await bleCharacteristic.startNotifications();
-
-            bleCharacteristic.addEventListener(
-                "characteristicvaluechanged",
-                onBLEMidiMessage
-            );
-
-        } catch (e) {
-
-            console.log(
-                "Notifiche non disponibili:",
-                e
-            );
-
-        }
-
-
-        bleConnected = true;
-
-
-        connBadge.innerText =
-            "SK-7 ONLINE";
-
-        connBadge.classList.add(
-            "connected"
-        );
-
-
-        connectButton.innerText =
-            "🔴 DISCONNETTI SK-7";
-
-        connectButton.classList.add(
-            "disconnect"
-        );
-
-        connectButton.onclick =
-            disconnectSK7;
-
-
-        outSelect.innerHTML =
-            "<option>🔵 M-VAVE SK-7 BLE</option>";
-
-
-        log(
-            "🟢 SK-7 ONLINE — pronto per MIDI."
-        );
-
-    }
-
-
-    catch (error) {
-
-        console.error(error);
-
-
-        log(
-            "❌ Connessione fallita: " +
-            error.message
-        );
-
-    }
-
-}
-
-
-/* =====================================================
-   DISCONNESSIONE SK-7
-   ===================================================== */
-
-function disconnectSK7() {
-
-    try {
-
-        if (
-            bleDevice &&
-            bleDevice.gatt &&
-            bleDevice.gatt.connected
-        ) {
-
-            bleDevice.gatt.disconnect();
-
-        }
-
-    } catch (e) {
-
-        console.log(e);
-
-    }
-
-
-    bleConnected = false;
-
-    bleCharacteristic = null;
-
-    bleServer = null;
-
-
-    connBadge.innerText =
-        "OFFLINE";
-
-    connBadge.classList.remove(
-        "connected"
-    );
-
-
-    connectButton.innerText =
-        "🔵 CONNETTI SK-7";
-
-    connectButton.classList.remove(
-        "disconnect"
-    );
-
-    connectButton.onclick =
-        connectSK7;
-
-
-    outSelect.innerHTML =
-        "<option>Nessun dispositivo MIDI</option>";
-
-
-    log(
-        "SK-7 disconnesso."
-    );
-
-}
-
-
-/* =====================================================
-   DISCONNESSIONE IMPROVVISA
-   ===================================================== */
-
-function onBLEDisconnected() {
-
-    bleConnected = false;
-
-    bleCharacteristic = null;
-
-    bleServer = null;
-
-
-    connBadge.innerText =
-        "OFFLINE";
-
-    connBadge.classList.remove(
-        "connected"
-    );
-
-
-    connectButton.innerText =
-        "🔵 CONNETTI SK-7";
-
-    connectButton.classList.remove(
-        "disconnect"
-    );
-
-    connectButton.onclick =
-        connectSK7;
-
-
-    log(
-        "⚠️ SK-7 disconnesso."
-    );
-
-}
-
-
-/* =====================================================
-   TIMESTAMP BLE MIDI
-   ===================================================== */
-
-function getBLEMidiTimestamp() {
-
-    /*
-     * BLE MIDI utilizza un timestamp rolling
-     * a 13 bit.
-     *
-     * Risoluzione: millisecondi.
-     */
-
-    return Date.now() & 0x1FFF;
-
-}
-
-
-/* =====================================================
-   CREAZIONE PACCHETTO BLE MIDI
-   ===================================================== */
-
-function createBLEMidiPacket(
-    midiBytes
-) {
-
-    const timestamp =
-        getBLEMidiTimestamp();
-
-
-    /*
-     * Primo byte:
-     *
-     * bit 7 = 1
-     * bit 6..0 = parte alta timestamp
-     */
-
-    const timestampHigh =
-        0x80 |
-        ((timestamp >> 7) & 0x3F);
-
-
-    /*
-     * Secondo byte:
-     *
-     * bit 7 = 1
-     * bit 6..0 = parte bassa timestamp
-     */
-
-    const timestampLow =
-        0x80 |
-        (timestamp & 0x7F);
-
-
-    return new Uint8Array([
-
-        timestampHigh,
-
-        timestampLow,
-
-        ...midiBytes
-
-    ]);
-
-}
-
-
-/* =====================================================
-   INVIO MIDI VIA BLE
-   ===================================================== */
-
-async function sendBLEMidi(
-    midiBytes
-) {
-
-    if (
-        !bleConnected ||
-        !bleCharacteristic
-    ) {
-
-        throw new Error(
-            "SK-7 non connesso"
-        );
-
-    }
-
-
-    const packet =
-        createBLEMidiPacket(
-            midiBytes
-        );
-
-
-    /*
-     * Preferiamo writeWithoutResponse,
-     * che è la modalità prevista per BLE MIDI.
-     */
-
-    if (
-        bleCharacteristic.writeValueWithoutResponse
-    ) {
-
-        await bleCharacteristic
-            .writeValueWithoutResponse(packet);
-
-    } else {
-
-        /*
-         * Fallback per browser meno recenti.
-         */
-
-        await bleCharacteristic
-            .writeValue(packet);
-
-    }
-
-
-    console.log(
-        "BLE MIDI:",
-        Array.from(packet)
-            .map(
-                x => x.toString(16).padStart(2, "0")
-            )
-            .join(" ")
-    );
-
-}
-
-
-/* =====================================================
-   RICEZIONE MIDI BLE
-   ===================================================== */
-
-function onBLEMidiMessage(event) {
-
-    const data =
-        new Uint8Array(
-            event.target.value.buffer
-        );
-
-
-    console.log(
-        "MIDI ricevuto BLE:",
-        Array.from(data)
-    );
-
-}
-
-
-/* =====================================================
-   WEB MIDI
-   ===================================================== */
-
-if (
-    navigator.requestMIDIAccess
-) {
-
-    navigator.requestMIDIAccess({
-        sysex: false
-    })
-    .then(
-        initMIDI
-    )
-    .catch(
-        error => {
-
-            console.log(
-                "Web MIDI non disponibile:",
-                error
-            );
-
-        }
-    );
-
-}
-
-
-/* =====================================================
-   INIT WEB MIDI
-   ===================================================== */
-
-function initMIDI(access) {
-
-    midiAccess =
-        access;
-
-
-    midiAccess.onstatechange =
-        scanPorts;
-
-
-    scanPorts();
-
-}
-
-
-/* =====================================================
-   SCANSIONE PORTE MIDI
-   ===================================================== */
-
-function scanPorts() {
-
-    if (!midiAccess) {
-
-        return;
-    }
-
-
-    outSelect.innerHTML = "";
-
-
-    const outputs =
-        Array.from(
-            midiAccess.outputs.values()
-        );
-
-
-    if (
-        outputs.length === 0
-    ) {
-
-        if (!bleConnected) {
-
-            outSelect.innerHTML =
-                "<option>Nessuna periferica MIDI</option>";
-
-            connBadge.innerText =
-                "OFFLINE";
-
-            connBadge.classList.remove(
-                "connected"
-            );
-
-        }
-
-        selectedOutput = null;
-
-        return;
-    }
-
-
-    outputs.forEach(
-        output => {
-
-            const option =
-                document.createElement(
-                    "option"
-                );
-
-            option.value =
-                output.id;
-
-            option.text =
-                output.name ||
-                "Porta MIDI";
-
-            outSelect.appendChild(
-                option
-            );
-
-        }
-    );
-
-
-    selectedOutput =
-        outputs[0];
-
-
-    if (!bleConnected) {
-
-        connBadge.innerText =
-            "MIDI ONLINE";
-
-        connBadge.classList.add(
-            "connected"
-        );
-
-    }
-
-}
-
-
-/* =====================================================
-   CAMBIO PORTA MIDI
-   ===================================================== */
-
-outSelect.addEventListener(
-    "change",
-    () => {
-
-        if (!midiAccess) {
-
-            return;
-        }
-
-
-        selectedOutput =
-            midiAccess.outputs.get(
-                outSelect.value
-            );
-
-    }
-);
-
-
-/* =====================================================
-   INVIO CC
-   ===================================================== */
-
-async function sendCC(
-    ccNumber,
-    value
-) {
-
-    const channel =
-        parseInt(
-            chanSelect.value,
-            10
-        );
-
-
-    const statusByte =
-        0xB0 + channel;
-
-
-    const midiMessage = [
-
-        statusByte,
-
-        ccNumber,
-
-        value
-
-    ];
-
-
-    /*
-     * PRIORITÀ:
-     *
-     * 1. SK-7 BLE
-     * 2. Web MIDI
-     */
-
-    if (
-        bleConnected &&
-        bleCharacteristic
-    ) {
-
-        try {
-
-            await sendBLEMidi(
-                midiMessage
-            );
-
-
-            log(
-                "📡 SK-7 → CC " +
-                ccNumber +
-                " = " +
-                value +
-                " CH " +
-                (channel + 1)
-            );
-
-
-            return;
-
-        }
-
-        catch (error) {
-
-            console.error(
-                error
-            );
-
-
-            log(
-                "❌ Errore BLE MIDI: " +
-                error.message
-            );
-
-
-            return;
-        }
-
-    }
-
-
-    /*
-     * Web MIDI normale
-     */
-
-    if (selectedOutput) {
-
-        selectedOutput.send(
-            midiMessage
-        );
-
-
-        log(
-            "🎹 MIDI → CC " +
-            ccNumber +
-            " = " +
-            value
-        );
-
-
-        return;
-    }
-
-
-    alert(
-        "Nessun dispositivo MIDI connesso."
-    );
-
-}
-
-
-/* =====================================================
-   TOGGLE FX
-   ===================================================== */
-
-function toggleFx(
-    ccNumber,
-    element
-) {
-
-    fxState[ccNumber] =
-        !fxState[ccNumber];
-
-
-    const value =
-        fxState[ccNumber]
-            ? 127
-            : 0;
-
-
-    sendCC(
-        ccNumber,
-        value
-    );
-
-
-    element.classList.toggle(
-        "active",
-        fxState[ccNumber]
-    );
-
-}
-
-
-/* =====================================================
-   TUTTI FX OFF
-   ===================================================== */
-
-function allFxOff() {
-
-    const cards =
-        document.querySelectorAll(
-            ".fx-card"
-        );
-
-
-    Object.keys(
-        fxState
-    ).forEach(
-        (cc, index) => {
-
-            fxState[cc] =
-                false;
-
-
-            sendCC(
-                parseInt(cc, 10),
-                0
-            );
-
-
-            cards[index]
-                .classList
-                .remove("active");
-
-        }
-    );
-
-
-    log(
-        "🔴 Tutti gli FX OFF"
-    );
-
-}
-
-
-/* =====================================================
-   TUTTI FX ON
-   ===================================================== */
-
-function allFxOn() {
-
-    const cards =
-        document.querySelectorAll(
-            ".fx-card"
-        );
-
-
-    Object.keys(
-        fxState
-    ).forEach(
-        (cc, index) => {
-
-            fxState[cc] =
-                true;
-
-
-            sendCC(
-                parseInt(cc, 10),
-                127
-            );
-
-
-            cards[index]
-                .classList
-                .add("active");
-
-        }
-    );
-
-
-    log(
-        "🟢 Tutti gli FX ON"
-    );
-
-}
-
-
-</script>
-
-</body>
-
-</html>
+.small{
+  font-size:.7rem;
+  color:var(--dim);
+  margin-top:8
