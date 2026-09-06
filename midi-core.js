@@ -92,11 +92,14 @@ async function connectInputSK7(onSuccess) {
    ========================================================= */
 
 async function sendMidiBytes(bytes) {
+  // Converte in array standard se necessario
+  const data = Array.from(bytes);
+
   // 1. Invio tramite BLE SK-7
   if (outCharacteristic) {
     try {
       const timestamp = 0x80;
-      const packet = new Uint8Array([timestamp, timestamp, ...bytes]);
+      const packet = new Uint8Array([timestamp, timestamp, ...data]);
 
       if (outCharacteristic.writeValueWithoutResponse) {
         await outCharacteristic.writeValueWithoutResponse(packet);
@@ -115,7 +118,7 @@ async function sendMidiBytes(bytes) {
       const midi = await navigator.requestMIDIAccess();
       let sent = false;
       midi.outputs.forEach(output => {
-        output.send(bytes);
+        output.send(data);
         sent = true;
       });
       if (sent) return true;
@@ -139,20 +142,32 @@ async function sendCC(cc, value) {
   return ok;
 }
 
-// Invio Cambio Preset (Program Change + Bank Select)
+// Helper per pause asincrone
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+// Invio Cambio Preset (Program Change + Bank Select con delay)
 async function sendPresetChange(presetNumber) {
+  if (presetNumber < 1 || presetNumber > 384) {
+    log("ERRORE: Numero preset deve essere compreso tra 1 e 384");
+    return;
+  }
+
   const channel = parseInt(document.getElementById("midiChannel")?.value || 0, 10);
   const zeroBased = presetNumber - 1;
-  const bank = Math.floor(zeroBased / 128); // CC 0
-  const program = zeroBased % 128;         // PC
+  const bank = Math.floor(zeroBased / 128); // CC 0 -> Banco 0, 1 o 2
+  const program = zeroBased % 128;         // PC   -> Indice da 0 a 127
 
-  // 1. Bank Select CC 0
-  await sendMidiBytes([0xB0 + channel, 0x00, bank]);
-  // 2. Program Change
-  const ok = await sendMidiBytes([0xC0 + channel, program]);
+  // 1. Invio Bank Select (CC 0)
+  const ccOk = await sendMidiBytes([0xB0 + channel, 0x00, bank]);
 
-  if (ok) {
-    log(`PRESET INVIATO -> Song Preset ${presetNumber} (Banco ${bank}, PC ${program})`);
+  // 2. Pausa tecnica indispensabile per far processare il cambio banco al VoiceLive 2
+  await delay(35);
+
+  // 3. Invio Program Change
+  const pcOk = await sendMidiBytes([0xC0 + channel, program]);
+
+  if (ccOk && pcOk) {
+    log(`PRESET INVIATO -> Preset ${presetNumber} [CC0 Banco: ${bank}, PC Program: ${program}]`);
   }
 }
 
