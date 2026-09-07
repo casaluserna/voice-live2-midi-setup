@@ -131,7 +131,7 @@
       margin: 0 !important;
     }
 
-    /* --- STILI SPECIFICI MODALITÀ SCHERMO INTERO TESTI --- */
+    /* Modalità Schermo Intero Testi */
     .fullscreen-mode .btn-ytmusic,
     .fullscreen-mode .yt-embed-box label,
     .fullscreen-mode .yt-embed-box > div {
@@ -228,7 +228,6 @@
       <a id="lyricsLink" class="btn-lyrics" href="#" target="_blank" style="display:none;">🔍 Cerca testo su Google</a>
       
       <div id="notesContainer" style="display:none;">
-        <!-- Player Bar riorganizzata -->
         <div class="player-container" id="playerContainer">
           <div class="player-row">
             <button id="btnPlay" class="btn-play" onclick="togglePlay()">▶ PLAY</button>
@@ -330,6 +329,9 @@
   let timerInterval = null;
   let isRawEditMode = false;
   let ytPlayer = null;
+
+  // Offset in secondi per far partire il testo in anticipo (es: 2 secondi)
+  const lrcOffsetSeconds = 2.0;
 
   window.addEventListener("load", () => {
     loadSongsFromStorage();
@@ -747,13 +749,15 @@
     display.scrollTop = 0;
   }
 
+  /* Aggiornato: Aggiunti 2 secondi di anticipo (+ lrcOffsetSeconds) */
   function updateLrcHighlight(currentTime) {
     let activeIndex = -1;
+    const effectiveTime = currentTime + lrcOffsetSeconds;
 
     for (let i = 0; i < parsedLrc.length; i++) {
-      if (parsedLrc[i].time !== null && parsedLrc[i].time <= currentTime) {
+      if (parsedLrc[i].time !== null && parsedLrc[i].time <= effectiveTime) {
         activeIndex = i;
-      } else if (parsedLrc[i].time !== null && parsedLrc[i].time > currentTime) {
+      } else if (parsedLrc[i].time !== null && parsedLrc[i].time > effectiveTime) {
         break;
       }
     }
