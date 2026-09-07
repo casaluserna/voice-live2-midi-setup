@@ -321,7 +321,7 @@
       const hasTiming = parsedLrc.some(item => item.time !== null);
       document.getElementById("playerBar").style.display = hasTiming ? "flex" : "none";
       
-      onNotesInput(); // Mostra il pulsante di salvataggio
+      onNotesInput();
       log(`File .LRC caricato: ${file.name}`);
       event.target.value = "";
     };
@@ -491,7 +491,7 @@
   }
 
   /* =========================================================
-     PARSER ED ESECUZIONE FORMATO .LRC
+     PARSER ED ESECUZIONE FORMATO .LRC CON SCORRIMENTO ANTICIPATO
      ========================================================= */
 
   function parseLRC(lrcText) {
@@ -591,10 +591,28 @@
 
     if (activeIndex !== -1) {
       document.querySelectorAll('.lrc-line').forEach(el => el.classList.remove('active'));
+      
       const activeEl = document.getElementById(`lrc-line-${activeIndex}`);
       if (activeEl) {
         activeEl.classList.add('active');
-        activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        const container = document.getElementById("lrcDisplay");
+
+        const containerRect = container.getBoundingClientRect();
+        const elementRect = activeEl.getBoundingClientRect();
+
+        const relativeTop = elementRect.top - containerRect.top;
+        const threshold = container.clientHeight * 0.65; // Soglia 65% dell'altezza visibile
+
+        // Se la riga supera la soglia, sposta il testo verso il terzo superiore (30%)
+        if (relativeTop > threshold) {
+          const targetScroll = container.scrollTop + (relativeTop - (container.clientHeight * 0.30));
+          
+          container.scrollTo({
+            top: targetScroll,
+            behavior: 'smooth'
+          });
+        }
       }
     }
   }
