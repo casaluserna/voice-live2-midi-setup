@@ -56,14 +56,14 @@
     .btn-play { background:#214e30; color:#8cffae; border-color:#28452f; min-height:44px; flex:2; }
     .btn-stop { background:#512222; color:#ff4d4d; border-color:#632828; min-height:44px; flex:1; }
 
-    .notes-wrapper { display:flex; gap:8px; align-items:stretch; flex-grow:1; }
+    .notes-wrapper { display:flex; gap:8px; align-items:stretch; flex-grow:1; height:60vh; min-height:350px; }
     
     /* BOX VISUALIZZAZIONE TESTO LRC */
-    .lrc-display { background:#090b0e; border:1px solid var(--border); border-radius:8px; padding:16px; font-size:18px; color:#e2e8f0; height:60vh; min-height:350px; overflow-y:auto; flex-grow:1; box-sizing:border-box; scroll-behavior:smooth; }
+    .lrc-display { background:#090b0e; border:1px solid var(--border); border-radius:8px; padding:16px; font-size:18px; color:#e2e8f0; height:100%; overflow-y:auto; flex-grow:1; box-sizing:border-box; scroll-behavior:smooth; }
     .lrc-line { padding:6px 8px; border-radius:6px; transition:all 0.2s ease; margin-bottom:4px; opacity:0.6; }
     .lrc-line.active { background:#284263; color:#ffffff; font-weight:bold; opacity:1; transform:scale(1.01); }
 
-    .notes-editor { background:#090b0e; border:1px solid var(--border); border-radius:8px; padding:12px; font-size:16px; color:#e2e8f0; height:60vh; min-height:350px; width:100%; box-sizing:border-box; display:none; }
+    .notes-editor { background:#090b0e; border:1px solid var(--border); border-radius:8px; padding:12px; font-size:16px; color:#e2e8f0; height:100%; width:100%; box-sizing:border-box; display:none; }
     
     .scroll-btns { display:flex; flex-direction:column; gap:8px; width:55px; }
     .btn-scroll { flex:1; min-height:auto; font-size:22px; background:#252d3a; border-color:#3b475a; color:#7cb3ff; padding:0; display:flex; align-items:center; justify-content:center; }
@@ -73,7 +73,7 @@
     .btn-load-lrc { background:#332940; border-color:#5c4775; color:#d8b4fe; min-height:36px; font-size:13px; width:auto; margin-top:0; }
     .btn-save-notes { background:#1e3a5f; color:#93c5fd; border-color:#2b4c7e; min-height:44px; font-size:14px; margin-top:8px; display:none; }
 
-    /* STILI PER MODALITÀ SCHERMO INTERO */
+    /* STILI CORRETTI PER MODALITÀ SCHERMO INTERO */
     .fullscreen-mode {
       position: fixed !important;
       top: 0 !important;
@@ -89,9 +89,8 @@
       border-radius: 0 !important;
       border: none !important;
     }
-    .fullscreen-mode .lrc-display, 
-    .fullscreen-mode .notes-editor {
-      height: 100% !important;
+    .fullscreen-mode .notes-wrapper {
+      height: calc(100vh - 120px) !important;
       min-height: unset !important;
     }
 
@@ -159,7 +158,7 @@
         </div>
 
         <div class="notes-wrapper">
-          <!-- DISPLAY PER TESTO SCORREVOLE (PULITO DAI TIMING) -->
+          <!-- DISPLAY PER TESTO SCORREVOLE -->
           <div id="lrcDisplay" class="lrc-display"></div>
           
           <!-- EDITOR RAW PER TESTO CON TIMING .LRC -->
@@ -491,7 +490,7 @@
   }
 
   /* =========================================================
-     PARSER ED ESECUZIONE FORMATO .LRC CON SCORRIMENTO ANTICIPATO
+     PARSER ED ESECUZIONE FORMATO .LRC CON SCORRIMENTO UNIVERSALE
      ========================================================= */
 
   function parseLRC(lrcText) {
@@ -590,29 +589,18 @@
     }
 
     if (activeIndex !== -1) {
-      document.querySelectorAll('.lrc-line').forEach(el => el.classList.remove('active'));
+      const lines = document.querySelectorAll('.lrc-line');
       
       const activeEl = document.getElementById(`lrc-line-${activeIndex}`);
-      if (activeEl) {
+      if (activeEl && !activeEl.classList.contains('active')) {
+        lines.forEach(el => el.classList.remove('active'));
         activeEl.classList.add('active');
 
-        const container = document.getElementById("lrcDisplay");
-
-        const containerRect = container.getBoundingClientRect();
-        const elementRect = activeEl.getBoundingClientRect();
-
-        const relativeTop = elementRect.top - containerRect.top;
-        const threshold = container.clientHeight * 0.65; // Soglia 65% dell'altezza visibile
-
-        // Se la riga supera la soglia, sposta il testo verso il terzo superiore (30%)
-        if (relativeTop > threshold) {
-          const targetScroll = container.scrollTop + (relativeTop - (container.clientHeight * 0.30));
-          
-          container.scrollTo({
-            top: targetScroll,
-            behavior: 'smooth'
-          });
-        }
+        // Scorrimento fluido nativo: posiziona automaticamente il verso nel terzo superiore sia in modalità standard che Fullscreen
+        activeEl.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
       }
     }
   }
