@@ -73,25 +73,28 @@
     .btn-load-lrc { background:#332940; border-color:#5c4775; color:#d8b4fe; min-height:36px; font-size:13px; width:auto; margin-top:0; }
     .btn-save-notes { background:#1e3a5f; color:#93c5fd; border-color:#2b4c7e; min-height:44px; font-size:14px; margin-top:8px; display:none; }
 
-    /* STILI CORRETTI PER MODALITÀ SCHERMO INTERO */
-    .fullscreen-mode {
+    /* STILI FULLSCREEN TOTALE ADATTATIVO IN ORIZZONTALE E VERTICALE */
+    :fullscreen #notesContainer,
+    :-webkit-full-screen #notesContainer {
       position: fixed !important;
       top: 0 !important;
       left: 0 !important;
       width: 100vw !important;
       height: 100vh !important;
-      z-index: 99999 !important;
       background: var(--bg) !important;
-      padding: 15px !important;
+      padding: 12px !important;
       margin: 0 !important;
       display: flex !important;
       flex-direction: column !important;
-      border-radius: 0 !important;
-      border: none !important;
+      box-sizing: border-box !important;
+      z-index: 999999 !important;
     }
-    .fullscreen-mode .notes-wrapper {
-      height: calc(100vh - 120px) !important;
-      min-height: unset !important;
+
+    :fullscreen .notes-wrapper,
+    :-webkit-full-screen .notes-wrapper {
+      flex: 1 !important;
+      height: auto !important;
+      min-height: 0 !important;
     }
 
     .log { height:120px; overflow:auto; background:#090b0e; border-radius:10px; padding:10px; font-family:monospace; font-size:12px; color:#bfc5cf; white-space:pre-wrap; }
@@ -154,6 +157,7 @@
             <option value="18px" selected>Dimensione: Normale</option>
             <option value="22px">Dimensione: Grande</option>
             <option value="28px">Dimensione: Molto Grande</option>
+            <option value="36px">Dimensione: Gigante</option>
           </select>
         </div>
 
@@ -227,7 +231,6 @@
   let startTime = 0;
   let timerInterval = null;
   let isRawEditMode = false;
-  let isFullscreen = false;
 
   window.addEventListener("load", () => {
     loadSongsFromStorage();
@@ -465,23 +468,39 @@
   }
 
   /* =========================================================
-     GESTIONE SCHERMO INTERO (FULLSCREEN)
+     GESTIONE SCHERMO INTERO REALE (FULLSCREEN API NATIVA)
      ========================================================= */
 
   function toggleFullscreen() {
     const container = document.getElementById("notesContainer");
+
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      if (container.requestFullscreen) {
+        container.requestFullscreen();
+      } else if (container.webkitRequestFullscreen) {
+        container.webkitRequestFullscreen();
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      }
+    }
+  }
+
+  // Aggiorna lo stato visivo del pulsante quando si entra/esce dallo schermo intero
+  document.addEventListener("fullscreenchange", updateFullscreenBtn);
+  document.addEventListener("webkitfullscreenchange", updateFullscreenBtn);
+
+  function updateFullscreenBtn() {
     const btn = document.getElementById("btnFullscreen");
-
-    isFullscreen = !isFullscreen;
-
-    if (isFullscreen) {
-      container.classList.add("fullscreen-mode");
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
       btn.textContent = "✕ Chiudi Fullscreen";
       btn.style.background = "#512222";
       btn.style.borderColor = "#632828";
       btn.style.color = "#ff4d4d";
     } else {
-      container.classList.remove("fullscreen-mode");
       btn.textContent = "⛶ Schermo Intero";
       btn.style.background = "#1f324d";
       btn.style.borderColor = "#3d8bfd";
@@ -490,7 +509,7 @@
   }
 
   /* =========================================================
-     PARSER ED ESECUZIONE FORMATO .LRC CON SCORRIMENTO UNIVERSALE
+     PARSER ED ESECUZIONE FORMATO .LRC
      ========================================================= */
 
   function parseLRC(lrcText) {
@@ -596,7 +615,6 @@
         lines.forEach(el => el.classList.remove('active'));
         activeEl.classList.add('active');
 
-        // Scorrimento fluido nativo: posiziona automaticamente il verso nel terzo superiore sia in modalità standard che Fullscreen
         activeEl.scrollIntoView({
           behavior: 'smooth',
           block: 'center'
@@ -642,7 +660,7 @@
       activeSongIndex = null;
       lyricsBtn.style.display = "none";
       notesContainer.style.display = "none";
-      if (isFullscreen) toggleFullscreen();
+      if (document.fullscreenElement) toggleFullscreen();
       return;
     }
 
