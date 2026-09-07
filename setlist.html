@@ -21,7 +21,7 @@
     html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: Arial, sans-serif; }
     body { padding: 18px; }
     
-    .container { max-width: 800px; margin: auto; transition: max-width 0.3s ease; }
+    .container { max-width: 900px; margin: auto; transition: max-width 0.3s ease; }
     
     a.back { color:var(--blue); text-decoration:none; display:inline-block; margin-bottom:15px; font-size:14px; }
     h1 { font-size:22px; margin:0 0 15px; }
@@ -65,26 +65,27 @@
     .yt-embed-box input { margin-bottom:6px; font-size:14px; min-height:38px; }
     .yt-player-frame { width:100%; height:120px; border-radius:6px; border:none; display:none; margin-top:6px; }
 
-    .notes-wrapper { display:flex; gap:8px; align-items:stretch; flex-grow:1; height:60vh; min-height:350px; }
+    /* Layout a 2 colonne affiancate in modalità standard */
+    .notes-wrapper { display:flex; gap:10px; align-items:stretch; height:60vh; min-height:380px; }
     
-    .lrc-display { background:#090b0e; border:1px solid var(--border); border-radius:8px; padding:16px; font-size:18px; color:#e2e8f0; height:100%; overflow-y:auto; flex-grow:1; box-sizing:border-box; scroll-behavior:smooth; }
+    .lrc-display { background:#090b0e; border:1px solid var(--border); border-radius:8px; padding:14px; font-size:16px; color:#e2e8f0; height:100%; overflow-y:auto; flex:1; box-sizing:border-box; scroll-behavior:smooth; }
     .lrc-line { padding:6px 8px; border-radius:6px; transition:all 0.2s ease; margin-bottom:4px; opacity:0.6; }
     .lrc-line.clickable { cursor:pointer; }
     .lrc-line.clickable:hover { background:#1e293b; }
     .lrc-line.active { background:#284263; color:#ffffff; font-weight:bold; opacity:1; transform:scale(1.01); }
 
-    .notes-editor { background:#090b0e; border:1px solid var(--border); border-radius:8px; padding:12px; font-size:16px; color:#e2e8f0; height:100%; width:100%; box-sizing:border-box; display:none; }
+    .notes-editor { background:#090b0e; border:1px solid var(--border); border-radius:8px; padding:12px; font-size:14px; color:#e2e8f0; height:100%; flex:1; box-sizing:border-box; display:block; resize:none; margin-bottom:0; font-family:monospace; }
     
-    .scroll-btns { display:flex; flex-direction:column; gap:8px; width:55px; }
-    .btn-scroll { flex:1; min-height:auto; font-size:22px; background:#252d3a; border-color:#3b475a; color:#7cb3ff; padding:0; display:flex; align-items:center; justify-content:center; }
+    .scroll-btns { display:flex; flex-direction:column; gap:8px; width:45px; }
+    .btn-scroll { flex:1; min-height:auto; font-size:20px; background:#252d3a; border-color:#3b475a; color:#7cb3ff; padding:0; display:flex; align-items:center; justify-content:center; }
     
-    .btn-toggle-edit { background:#2a3342; border-color:#3b475a; color:#d1d5db; min-height:36px; font-size:13px; width:auto; margin-top:0; }
     .btn-fullscreen { background:#1f324d; border-color:#3d8bfd; color:#7cb3ff; min-height:36px; font-size:13px; width:auto; margin-top:0; }
     .btn-fullscreen-lyrics { background:#1c4d3b; border-color:#25d366; color:#a3ffd2; min-height:44px; font-size:15px; width:100%; margin-top:10px; }
     .btn-rotate { background:#2c3a2f; border-color:#48634e; color:#95e0a1; min-height:36px; font-size:13px; width:auto; margin-top:0; }
     .btn-load-lrc { background:#332940; border-color:#5c4775; color:#d8b4fe; min-height:36px; font-size:13px; width:auto; margin-top:0; }
     .btn-save-notes { background:#1e3a5f; color:#93c5fd; border-color:#2b4c7e; min-height:44px; font-size:14px; margin-top:8px; display:none; }
 
+    /* Modalità a Schermo Intero: Nasconde l'editor ed espande solo il testo pulito */
     .fullscreen-mode #notesContainer {
       position: fixed;
       top: 0;
@@ -102,6 +103,10 @@
     .fullscreen-mode .notes-wrapper {
       height: 100%;
       min-height: 0;
+    }
+
+    .fullscreen-mode .notes-editor {
+      display: none !important;
     }
 
     .btn-close-fullscreen {
@@ -185,6 +190,22 @@
       overflow-x: hidden;
     }
 
+    /* Adattamento schermi piccoli: colonna singola se lo schermo è molto stretto */
+    @media (max-width: 600px) {
+      .notes-wrapper:not(.fullscreen-mode .notes-wrapper) {
+        flex-direction: column;
+        height: auto;
+      }
+      .lrc-display, .notes-editor {
+        height: 250px;
+      }
+      .scroll-btns {
+        flex-direction: row;
+        width: 100%;
+        height: 40px;
+      }
+    }
+
     .log { height:120px; overflow:auto; background:#090b0e; border-radius:10px; padding:10px; font-family:monospace; font-size:12px; color:#bfc5cf; white-space:pre-wrap; }
   </style>
 </head>
@@ -247,21 +268,21 @@
 
         <div class="notes-controls">
           <button class="btn-load-lrc" onclick="document.getElementById('lrcFileInput').click()">📂 Carica File .LRC</button>
-          <button class="btn-toggle-edit" id="btnEditMode" onclick="toggleEditMode()">✏️ Modifica Codice</button>
 
           <input type="file" id="lrcFileInput" accept=".lrc,.txt" style="display:none;" onchange="handleLrcFileUpload(event)">
 
           <select id="fontSizeSelect" class="font-select" onchange="changeFontSize(this.value)">
             <option value="14px">Dimensione: Piccola</option>
-            <option value="18px" selected>Dimensione: Normale</option>
-            <option value="22px">Dimensione: Grande</option>
-            <option value="28px">Dimensione: Molto Grande</option>
-            <option value="36px">Dimensione: Gigante</option>
+            <option value="16px" selected>Dimensione: Normale</option>
+            <option value="20px">Dimensione: Grande</option>
+            <option value="26px">Dimensione: Molto Grande</option>
+            <option value="32px">Dimensione: Gigante</option>
           </select>
 
           <button class="btn-close-fullscreen" onclick="toggleLyricsFullscreen()">❌ Chiudi Schermo Intero</button>
         </div>
 
+        <!-- 2 colonne affiancate: Sinistra (Testo Pulito) / Destra (Codice Editabile) -->
         <div class="notes-wrapper">
           <div id="lrcDisplay" class="lrc-display"></div>
           <textarea id="songNotes" class="notes-editor" placeholder="Incolla o carica un file .lrc [00:12.50]..." oninput="onNotesInput()"></textarea>
@@ -327,7 +348,6 @@
   let isPlaying = false;
   let startTime = 0;
   let timerInterval = null;
-  let isRawEditMode = false;
   let ytPlayer = null;
 
   const lrcOffsetSeconds = 2.0;
@@ -556,7 +576,6 @@
     const fileName = `scaletta_voicelive_${date}.json`;
     const blob = new Blob([jsonStr], { type: "application/json" });
 
-    // Se il dispositivo supporta la condivisione/salvataggio nativo (es. Smartphone)
     if (navigator.canShare && navigator.share) {
       try {
         const file = new File([blob], fileName, { type: "application/json" });
@@ -577,7 +596,6 @@
       }
     }
 
-    // Download classico per PC o browser senza Share API
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -820,25 +838,6 @@
     }
   }
 
-  function toggleEditMode() {
-    isRawEditMode = !isRawEditMode;
-    const lrcDisplay = document.getElementById("lrcDisplay");
-    const rawEditor = document.getElementById("songNotes");
-    const btn = document.getElementById("btnEditMode");
-
-    if (isRawEditMode) {
-      lrcDisplay.style.display = "none";
-      rawEditor.style.display = "block";
-      btn.textContent = "👁️ Vedi Testo Pulito";
-    } else {
-      rawEditor.style.display = "none";
-      lrcDisplay.style.display = "block";
-      btn.textContent = "✏️ Modifica Codice";
-      parsedLrc = parseLRC(rawEditor.value);
-      renderLrcDisplay();
-    }
-  }
-
   function onSongChange(songIndex) {
     const lyricsBtn = document.getElementById("lyricsLink");
     const notesContainer = document.getElementById("notesContainer");
@@ -897,10 +896,8 @@
       notesArea.value = rawContent;
       parsedLrc = parseLRC(rawContent);
 
-      isRawEditMode = false;
       document.getElementById("lrcDisplay").style.display = "block";
-      notesArea.style.display = "none";
-      document.getElementById("btnEditMode").textContent = "✏️ Modifica Codice";
+      notesArea.style.display = "block";
 
       renderLrcDisplay();
       saveNotesBtn.style.display = "none";
@@ -914,7 +911,7 @@
   }
 
   function scrollNotes(direction) {
-    const container = isRawEditMode ? document.getElementById("songNotes") : document.getElementById("lrcDisplay");
+    const container = document.getElementById("lrcDisplay");
     const scrollAmount = 180;
     if (direction === 'up') container.scrollTop -= scrollAmount;
     else container.scrollTop += scrollAmount;
@@ -922,6 +919,13 @@
 
   function onNotesInput() {
     document.getElementById("btnSaveLiveNotes").style.display = "block";
+    // Aggiorna la vista del testo sincronizzato in tempo reale mentre digiti nel codice
+    const rawContent = document.getElementById("songNotes").value;
+    parsedLrc = parseLRC(rawContent);
+    renderLrcDisplay();
+    if (isPlaying) {
+      updateLrcHighlight(window.currentLrcTime || 0);
+    }
   }
 
   function saveLiveNotes() {
