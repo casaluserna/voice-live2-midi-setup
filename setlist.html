@@ -65,7 +65,7 @@
     .yt-embed-box input { margin-bottom:6px; font-size:14px; min-height:38px; }
     .yt-player-frame { width:100%; height:120px; border-radius:6px; border:none; display:none; margin-top:6px; }
 
-    /* Layout a 2 colonne affiancate in modalità standard */
+    /* Layout a 2 colonne affiancate */
     .notes-wrapper { display:flex; gap:10px; align-items:stretch; height:60vh; min-height:380px; }
     
     .lrc-display { background:#090b0e; border:1px solid var(--border); border-radius:8px; padding:14px; font-size:16px; color:#e2e8f0; height:100%; overflow-y:auto; flex:1; box-sizing:border-box; scroll-behavior:smooth; }
@@ -74,8 +74,11 @@
     .lrc-line.clickable:hover { background:#1e293b; }
     .lrc-line.active { background:#284263; color:#ffffff; font-weight:bold; opacity:1; transform:scale(1.01); }
 
-    .notes-editor { background:#090b0e; border:1px solid var(--border); border-radius:8px; padding:12px; font-size:14px; color:#e2e8f0; height:100%; flex:1; box-sizing:border-box; display:block; resize:none; margin-bottom:0; font-family:monospace; }
-    
+    .notes-editor { background:#090b0e; border:1px solid var(--border); border-radius:8px; padding:14px; font-size:14px; color:#e2e8f0; height:100%; flex:1; box-sizing:border-box; display:block; overflow-y:auto; font-family:monospace; scroll-behavior:smooth; }
+    .code-line { padding:4px 6px; border-radius:4px; white-space:pre-wrap; word-break:break-all; min-height:24px; opacity:0.5; transition:all 0.2s ease; outline:none; }
+    .code-line:focus { opacity:1; background:#1b222d; border-left:3px solid var(--blue); }
+    .code-line.active { background:#284263; color:#ffffff; font-weight:bold; opacity:1; }
+
     .scroll-btns { display:flex; flex-direction:column; gap:8px; width:45px; }
     .btn-scroll { flex:1; min-height:auto; font-size:20px; background:#252d3a; border-color:#3b475a; color:#7cb3ff; padding:0; display:flex; align-items:center; justify-content:center; }
     
@@ -85,7 +88,7 @@
     .btn-load-lrc { background:#332940; border-color:#5c4775; color:#d8b4fe; min-height:36px; font-size:13px; width:auto; margin-top:0; }
     .btn-save-notes { background:#1e3a5f; color:#93c5fd; border-color:#2b4c7e; min-height:44px; font-size:14px; margin-top:8px; display:none; }
 
-    /* Modalità a Schermo Intero: Nasconde l'editor ed espande solo il testo pulito */
+    /* Schermo Intero */
     .fullscreen-mode #notesContainer {
       position: fixed;
       top: 0;
@@ -190,7 +193,6 @@
       overflow-x: hidden;
     }
 
-    /* Adattamento schermi piccoli: colonna singola se lo schermo è molto stretto */
     @media (max-width: 600px) {
       .notes-wrapper:not(.fullscreen-mode .notes-wrapper) {
         flex-direction: column;
@@ -282,10 +284,10 @@
           <button class="btn-close-fullscreen" onclick="toggleLyricsFullscreen()">❌ Chiudi Schermo Intero</button>
         </div>
 
-        <!-- 2 colonne affiancate: Sinistra (Testo Pulito) / Destra (Codice Editabile) -->
+        <!-- 2 colonne affiancate: Sinistra (Testo Pulito) / Destra (Codice Editabile riga per riga) -->
         <div class="notes-wrapper">
           <div id="lrcDisplay" class="lrc-display"></div>
-          <textarea id="songNotes" class="notes-editor" placeholder="Incolla o carica un file .lrc [00:12.50]..." oninput="onNotesInput()"></textarea>
+          <div id="codeEditor" class="notes-editor"></div>
 
           <div class="scroll-btns">
             <button class="btn-scroll" onclick="scrollNotes('up')">▲</button>
@@ -471,10 +473,12 @@
     const reader = new FileReader();
     reader.onload = function(e) {
       const content = e.target.result;
-      document.getElementById("songNotes").value = content;
-      
+      if (activeSongIndex !== null) {
+        songs[activeSongIndex].notes = content;
+      }
       parsedLrc = parseLRC(content);
       renderLrcDisplay();
+      renderCodeEditor(content);
       onNotesInput();
       log(`File .LRC caricato: ${file.name}`);
       event.target.value = "";
@@ -649,9 +653,9 @@
         const totalTime = min * 60 + sec + ms / 1000;
         const text = line.replace(timeRegex, '').trim();
 
-        result.push({ time: totalTime, text: text || '...', id: index });
+        result.push({ time: totalTime, text: text || '...', rawLine: line, id: index });
       } else if (line.trim() !== '') {
-        result.push({ time: null, text: line.trim(), id: index });
+        result.push({ time: null, text: line.trim(), rawLine: line, id: index });
       }
     });
 
@@ -680,6 +684,35 @@
 
       display.appendChild(div);
     });
+  }
+
+  function renderCodeEditor(rawText) {
+    const editor = document.getElementById("codeEditor");
+    editor.innerHTML = "";
+
+    if (parsedLrc.length === 0) {
+      editor.innerHTML = '<div class="code-line" contenteditable="true" oninput="onNotesInput()"></div>';
+      return;
+    }
+
+    parsedLrc.forEach((item, idx) => {
+      const div = document.createElement("div");
+      div.className = "code-line";
+      div.id = `code-line-${idx}`;
+      div.contentEditable = "true";
+      div.textContent = item.rawLine || "";
+      div.oninput = () => onNotesInput();
+      editor.appendChild(div);
+    });
+  }
+
+  function getRawContentFromEditor() {
+    const lines = document.querySelectorAll('#codeEditor .code-line');
+    let textArr = [];
+    lines.forEach(line => {
+      textArr.push(line.textContent);
+    });
+    return textArr.join('\n');
   }
 
   function jumpToLrcTime(seconds) {
@@ -810,9 +843,9 @@
       try { ytPlayer.seekTo(0); ytPlayer.pauseVideo(); } catch(e){}
     }
 
-    document.querySelectorAll('.lrc-line').forEach(el => el.classList.remove('active'));
-    const display = document.getElementById("lrcDisplay");
-    display.scrollTop = 0;
+    document.querySelectorAll('.lrc-line, .code-line').forEach(el => el.classList.remove('active'));
+    document.getElementById("lrcDisplay").scrollTop = 0;
+    document.getElementById("codeEditor").scrollTop = 0;
   }
 
   function updateLrcHighlight(currentTime) {
@@ -828,12 +861,22 @@
     }
 
     if (activeIndex !== -1) {
-      const lines = document.querySelectorAll('.lrc-line');
-      const activeEl = document.getElementById(`lrc-line-${activeIndex}`);
-      if (activeEl && !activeEl.classList.contains('active')) {
-        lines.forEach(el => el.classList.remove('active'));
-        activeEl.classList.add('active');
-        activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Evidenziazione Colonna Testo Pulito
+      const lrcLines = document.querySelectorAll('.lrc-line');
+      const activeLrc = document.getElementById(`lrc-line-${activeIndex}`);
+      if (activeLrc && !activeLrc.classList.contains('active')) {
+        lrcLines.forEach(el => el.classList.remove('active'));
+        activeLrc.classList.add('active');
+        activeLrc.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+
+      // Evidenziazione Colonna Codice LRC
+      const codeLines = document.querySelectorAll('.code-line');
+      const activeCode = document.getElementById(`code-line-${activeIndex}`);
+      if (activeCode && !activeCode.classList.contains('active')) {
+        codeLines.forEach(el => el.classList.remove('active'));
+        activeCode.classList.add('active');
+        activeCode.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     }
   }
@@ -841,7 +884,6 @@
   function onSongChange(songIndex) {
     const lyricsBtn = document.getElementById("lyricsLink");
     const notesContainer = document.getElementById("notesContainer");
-    const notesArea = document.getElementById("songNotes");
     const ytMusicBtn = document.getElementById("ytMusicBtn");
     const ytUrlInput = document.getElementById("ytUrlInput");
     const saveNotesBtn = document.getElementById("btnSaveLiveNotes");
@@ -893,13 +935,11 @@
       }
 
       const rawContent = selectedSong.notes || "";
-      notesArea.value = rawContent;
       parsedLrc = parseLRC(rawContent);
 
-      document.getElementById("lrcDisplay").style.display = "block";
-      notesArea.style.display = "block";
-
       renderLrcDisplay();
+      renderCodeEditor(rawContent);
+
       saveNotesBtn.style.display = "none";
       notesContainer.style.display = "block";
     }
@@ -907,20 +947,25 @@
 
   function changeFontSize(size) {
     document.getElementById("lrcDisplay").style.fontSize = size;
-    document.getElementById("songNotes").style.fontSize = size;
+    document.getElementById("codeEditor").style.fontSize = size;
   }
 
   function scrollNotes(direction) {
     const container = document.getElementById("lrcDisplay");
+    const editor = document.getElementById("codeEditor");
     const scrollAmount = 180;
-    if (direction === 'up') container.scrollTop -= scrollAmount;
-    else container.scrollTop += scrollAmount;
+    if (direction === 'up') {
+      container.scrollTop -= scrollAmount;
+      editor.scrollTop -= scrollAmount;
+    } else {
+      container.scrollTop += scrollAmount;
+      editor.scrollTop += scrollAmount;
+    }
   }
 
   function onNotesInput() {
     document.getElementById("btnSaveLiveNotes").style.display = "block";
-    // Aggiorna la vista del testo sincronizzato in tempo reale mentre digiti nel codice
-    const rawContent = document.getElementById("songNotes").value;
+    const rawContent = getRawContentFromEditor();
     parsedLrc = parseLRC(rawContent);
     renderLrcDisplay();
     if (isPlaying) {
@@ -930,7 +975,7 @@
 
   function saveLiveNotes() {
     if (activeSongIndex === null) return;
-    const newNotes = document.getElementById("songNotes").value;
+    const newNotes = getRawContentFromEditor();
     songs[activeSongIndex].notes = newNotes;
     saveSongsToStorage();
 
