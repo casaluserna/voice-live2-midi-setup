@@ -48,13 +48,18 @@
     .btn-edit { background:#284263; color:#7cb3ff; border:none; padding:6px 10px; border-radius:6px; width:auto; min-height:36px; font-size:13px; }
     .btn-del { background:#512222; color:#ff4d4d; border:none; padding:6px 10px; border-radius:6px; width:auto; min-height:36px; font-size:13px; }
 
-    /* CONTROLLI NOTE E EDIT IN TEMPO REALE */
-    .notes-controls { display:flex; justify-content:space-between; align-items:center; margin-top:10px; margin-bottom:6px; }
+    /* LAYOUT NOTE ED EDIT A SCHERMO TOTALE */
+    .notes-controls { display:flex; justify-content:space-between; align-items:center; margin-top:10px; margin-bottom:8px; }
     .notes-controls label { margin-bottom:0; }
     .font-select { width:auto; min-height:36px; height:36px; font-size:13px; padding:0 8px; }
 
-    .notes-editor { background:#090b0e; border:1px solid var(--border); border-radius:8px; padding:12px; font-size:16px; color:#e2e8f0; min-height:100px; margin-bottom:8px; width:100%; box-sizing:border-box; }
-    .btn-save-notes { background:#1e3a5f; color:#93c5fd; border-color:#2b4c7e; min-height:40px; font-size:14px; display:none; }
+    .notes-wrapper { display:flex; gap:8px; align-items:stretch; }
+    .notes-editor { background:#090b0e; border:1px solid var(--border); border-radius:8px; padding:12px; font-size:18px; color:#e2e8f0; height:60vh; min-height:350px; margin-bottom:8px; flex-grow:1; box-sizing:border-box; scroll-behavior:smooth; }
+    
+    .scroll-btns { display:flex; flex-direction:column; gap:8px; width:55px; }
+    .btn-scroll { flex:1; min-height:auto; font-size:22px; background:#252d3a; border-color:#3b475a; color:#7cb3ff; padding:0; display:flex; align-items:center; justify-content:center; }
+    
+    .btn-save-notes { background:#1e3a5f; color:#93c5fd; border-color:#2b4c7e; min-height:44px; font-size:14px; display:none; }
 
     .log { height:120px; overflow:auto; background:#090b0e; border-radius:10px; padding:10px; font-family:monospace; font-size:12px; color:#bfc5cf; white-space:pre-wrap; }
   </style>
@@ -96,18 +101,26 @@
     <div style="margin-top:15px;">
       <a id="lyricsLink" class="btn-lyrics" href="#" target="_blank" style="display:none;">🔍 Cerca testo su Google</a>
       
-      <!-- AREA NOTE CON REGOLAZIONE DIMENSIONE ED EDITING -->
+      <!-- AREA NOTE TOTALE CON FRECCE SCORRIMENTO -->
       <div id="notesContainer" style="display:none;">
         <div class="notes-controls">
-          <label>Note Brano (Editabili):</label>
+          <label>Note / Testo Brano:</label>
           <select id="fontSizeSelect" class="font-select" onchange="changeFontSize(this.value)">
             <option value="14px">Dimensione: Piccola</option>
             <option value="18px" selected>Dimensione: Normale</option>
             <option value="22px">Dimensione: Grande</option>
-            <option value="26px">Dimensione: Molto Grande</option>
+            <option value="28px">Dimensione: Molto Grande</option>
           </select>
         </div>
-        <textarea id="songNotes" class="notes-editor" placeholder="Scrivi qui le note del brano..." oninput="onNotesInput()"></textarea>
+
+        <div class="notes-wrapper">
+          <textarea id="songNotes" class="notes-editor" placeholder="Scrivi qui le note o il testo del brano..." oninput="onNotesInput()"></textarea>
+          <div class="scroll-btns">
+            <button class="btn-scroll" onclick="scrollNotes('up')">▲</button>
+            <button class="btn-scroll" onclick="scrollNotes('down')">▼</button>
+          </div>
+        </div>
+
         <button id="btnSaveLiveNotes" class="btn-save-notes" onclick="saveLiveNotes()">💾 Salva Modifiche Note</button>
       </div>
     </div>
@@ -345,7 +358,7 @@
   }
 
   /* =========================================================
-     ESECUZIONE BRANO LIVE & GESTIONE NOTE
+     ESECUZIONE BRANO LIVE & CONTROLLI NOTE
      ========================================================= */
 
   function onSongChange(songIndex) {
@@ -374,6 +387,7 @@
       lyricsBtn.style.display = "block";
 
       notesArea.value = selectedSong.notes || "";
+      notesArea.scrollTop = 0;
       saveNotesBtn.style.display = "none";
       notesContainer.style.display = "block";
     }
@@ -381,6 +395,16 @@
 
   function changeFontSize(size) {
     document.getElementById("songNotes").style.fontSize = size;
+  }
+
+  function scrollNotes(direction) {
+    const notesArea = document.getElementById("songNotes");
+    const scrollAmount = 180; // Pixel di scorrimento ad ogni tocco
+    if (direction === 'up') {
+      notesArea.scrollTop -= scrollAmount;
+    } else {
+      notesArea.scrollTop += scrollAmount;
+    }
   }
 
   function onNotesInput() {
