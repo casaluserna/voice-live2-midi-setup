@@ -49,14 +49,14 @@
     .btn-del { background:#512222; color:#ff4d4d; border:none; padding:6px 10px; border-radius:6px; width:auto; min-height:36px; font-size:13px; }
 
     /* LAYOUT NOTE & PLAYER LRC */
-    .notes-controls { display:flex; justify-content:space-between; align-items:center; margin-top:10px; margin-bottom:8px; gap:8px; }
+    .notes-controls { display:flex; justify-content:space-between; align-items:center; margin-top:10px; margin-bottom:8px; gap:8px; flex-wrap:wrap; }
     .font-select { width:auto; min-height:36px; height:36px; font-size:13px; padding:0 8px; }
 
     .player-bar { display:flex; gap:8px; margin-bottom:10px; }
     .btn-play { background:#214e30; color:#8cffae; border-color:#28452f; min-height:44px; flex:2; }
     .btn-stop { background:#512222; color:#ff4d4d; border-color:#632828; min-height:44px; flex:1; }
 
-    .notes-wrapper { display:flex; gap:8px; align-items:stretch; }
+    .notes-wrapper { display:flex; gap:8px; align-items:stretch; flex-grow:1; }
     
     /* BOX VISUALIZZAZIONE TESTO LRC */
     .lrc-display { background:#090b0e; border:1px solid var(--border); border-radius:8px; padding:16px; font-size:18px; color:#e2e8f0; height:60vh; min-height:350px; overflow-y:auto; flex-grow:1; box-sizing:border-box; scroll-behavior:smooth; }
@@ -69,7 +69,30 @@
     .btn-scroll { flex:1; min-height:auto; font-size:22px; background:#252d3a; border-color:#3b475a; color:#7cb3ff; padding:0; display:flex; align-items:center; justify-content:center; }
     
     .btn-toggle-edit { background:#2a3342; border-color:#3b475a; color:#d1d5db; min-height:36px; font-size:13px; width:auto; margin-top:0; }
+    .btn-fullscreen { background:#1f324d; border-color:#3d8bfd; color:#7cb3ff; min-height:36px; font-size:13px; width:auto; margin-top:0; }
     .btn-save-notes { background:#1e3a5f; color:#93c5fd; border-color:#2b4c7e; min-height:44px; font-size:14px; margin-top:8px; display:none; }
+
+    /* STILI PER MODALITÀ SCHERMO INTERO */
+    .fullscreen-mode {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      z-index: 99999 !important;
+      background: var(--bg) !important;
+      padding: 15px !important;
+      margin: 0 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      border-radius: 0 !important;
+      border: none !important;
+    }
+    .fullscreen-mode .lrc-display, 
+    .fullscreen-mode .notes-editor {
+      height: 100% !important;
+      min-height: unset !important;
+    }
 
     .log { height:120px; overflow:auto; background:#090b0e; border-radius:10px; padding:10px; font-family:monospace; font-size:12px; color:#bfc5cf; white-space:pre-wrap; }
   </style>
@@ -120,6 +143,7 @@
         </div>
 
         <div class="notes-controls">
+          <button class="btn-fullscreen" id="btnFullscreen" onclick="toggleFullscreen()">⛶ Schermo Intero</button>
           <button class="btn-toggle-edit" id="btnEditMode" onclick="toggleEditMode()">✏️ Modifica Codice LRC/Testo</button>
           <select id="fontSizeSelect" class="font-select" onchange="changeFontSize(this.value)">
             <option value="14px">Dimensione: Piccola</option>
@@ -192,6 +216,7 @@
   let startTime = 0;
   let timerInterval = null;
   let isRawEditMode = false;
+  let isFullscreen = false;
 
   window.addEventListener("load", () => {
     loadSongsFromStorage();
@@ -390,6 +415,31 @@
   }
 
   /* =========================================================
+     GESTIONE SCHERMO INTERO (FULLSCREEN)
+     ========================================================= */
+
+  function toggleFullscreen() {
+    const container = document.getElementById("notesContainer");
+    const btn = document.getElementById("btnFullscreen");
+
+    isFullscreen = !isFullscreen;
+
+    if (isFullscreen) {
+      container.classList.add("fullscreen-mode");
+      btn.textContent = "✕ Chiudi Fullscreen";
+      btn.style.background = "#512222";
+      btn.style.borderColor = "#632828";
+      btn.style.color = "#ff4d4d";
+    } else {
+      container.classList.remove("fullscreen-mode");
+      btn.textContent = "⛶ Schermo Intero";
+      btn.style.background = "#1f324d";
+      btn.style.borderColor = "#3d8bfd";
+      btn.style.color = "#7cb3ff";
+    }
+  }
+
+  /* =========================================================
      PARSER ED ESECUZIONE FORMATO .LRC
      ========================================================= */
 
@@ -535,6 +585,7 @@
       activeSongIndex = null;
       lyricsBtn.style.display = "none";
       notesContainer.style.display = "none";
+      if (isFullscreen) toggleFullscreen();
       return;
     }
 
