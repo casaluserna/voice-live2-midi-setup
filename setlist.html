@@ -34,6 +34,9 @@
     .btn-cancel { background:#3a3f4d; color:#ffffff; border-color:var(--border); display:none; }
     .btn-lyrics { background:#3d2b56; color:#d8b4fe; border-color:#5b3e82; display:block; text-align:center; text-decoration:none; line-height:48px; }
     
+    .backup-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:5px; }
+    .btn-backup { background:#2a3342; border-color:#3b475a; color:#d1d5db; min-height:44px; font-size:14px; }
+
     .nav-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
     .btn-nav { min-height:55px; font-size:18px; background:#20242c; border-color:var(--blue); }
 
@@ -101,10 +104,19 @@
     <button id="btnCancelEdit" class="btn-cancel" onclick="cancelEdit()">Annulla Modifica</button>
   </div>
 
-  <!-- GESTIONE BRANI -->
+  <!-- GESTIONE BRANI & BACKUP -->
   <div class="section">
     <label>Brani Memorizzati</label>
     <div id="songsContainer"></div>
+
+    <hr style="border:0; border-top:1px solid var(--border); margin:15px 0;">
+
+    <label>Backup & Ripristino Scaletta</label>
+    <div class="backup-grid">
+      <button class="btn-backup" onclick="exportSetlist()">💾 Esporta (.JSON)</button>
+      <button class="btn-backup" onclick="document.getElementById('importFile').click()">📂 Importa (.JSON)</button>
+    </div>
+    <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importSetlist(event)">
   </div>
 
   <!-- LOG -->
@@ -117,7 +129,7 @@
 <script src="midi-core.js"></script>
 <script>
   let songs = [];
-  let editingIndex = null; // Indica se stiamo modificando un brano esistente
+  let editingIndex = null;
 
   window.addEventListener("load", () => {
     loadSongsFromStorage();
@@ -187,10 +199,6 @@
     });
   }
 
-  /* =========================================================
-     OPERAZIONI AGGIUNTA / MODIFICA / SALVATAGGIO
-     ========================================================= */
-
   function saveSong() {
     const titleInput = document.getElementById("newTitle");
     const presetInput = document.getElementById("newPreset");
@@ -206,11 +214,9 @@
     }
 
     if (editingIndex !== null) {
-      // Modifica brano esistente
       songs[editingIndex] = { title: title, preset: preset, notes: notes };
       log(`Aggiornato: ${title} (Preset ${preset})`);
     } else {
-      // Aggiungi nuovo brano
       songs.push({ title: title, preset: preset, notes: notes });
       log(`Aggiunto: ${title} (Preset ${preset})`);
     }
@@ -232,7 +238,6 @@
     document.getElementById("btnSave").textContent = "✓ Salva Modifiche";
     document.getElementById("btnCancelEdit").style.display = "block";
 
-    // Scroll dinamico verso il modulo
     document.getElementById("formLabel").scrollIntoView({ behavior: 'smooth' });
   }
 
@@ -258,6 +263,56 @@
       renderSongsUI();
       if (editingIndex === index) resetForm();
     }
+  }
+
+  function exportSetlist() {
+    if (songs.length === 0) {
+      alert("La scaletta è vuota, non c'è nulla da esportare.");
+      return;
+    }
+
+    const jsonStr = JSON.stringify(songs, null, 2);
+    const blob = new Blob([jsonStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    
+    const date = new Date().toISOString().slice(0, 10);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `scaletta_voicelive_${date}.json`;
+    a.click();
+    
+    URL.revokeObjectURL(url);
+    log("Scaletta esportata con successo.");
+  }
+
+  function importSetlist(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const importedData = JSON.parse(e.target.result);
+
+        if (Array.isArray(importedData)) {
+          if (confirm("L'importazione sostituirà la tua scaletta attuale. Vuoi continuare?")) {
+            songs = importedData;
+            saveSongsToStorage();
+            renderSongsUI();
+            resetForm();
+            alert("Scaletta importata con successo!");
+            log("Nuova scaletta caricata da file JSON.");
+          }
+        } else {
+          alert("Il file non contiene una scaletta valida.");
+        }
+      } catch (err) {
+        alert("Errore nella lettura del file JSON: " + err.message);
+      }
+      event.target.value = "";
+    };
+
+    reader.readAsText(file);
   }
 
   function onSongChange(songIndex) {
