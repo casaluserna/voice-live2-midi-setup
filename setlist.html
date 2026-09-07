@@ -17,8 +17,12 @@
       --border:#30353f; 
     }
     * { box-sizing:border-box; }
-    body { margin:0; background:var(--bg); color:var(--text); font-family:Arial,sans-serif; padding:18px; }
-    .container { max-width:650px; margin:auto; }
+    html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: Arial, sans-serif; }
+    body { padding: 18px; }
+    
+    /* CONTAINER FLUIDO ADATTABILE */
+    .container { max-width: 800px; margin: auto; transition: max-width 0.3s ease; }
+    
     a.back { color:var(--blue); text-decoration:none; display:inline-block; margin-bottom:15px; font-size:14px; }
     h1 { font-size:22px; margin:0 0 15px; }
     .section { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; margin-bottom:15px; }
@@ -48,7 +52,7 @@
     .btn-edit { background:#284263; color:#7cb3ff; border:none; padding:6px 10px; border-radius:6px; width:auto; min-height:36px; font-size:13px; }
     .btn-del { background:#512222; color:#ff4d4d; border:none; padding:6px 10px; border-radius:6px; width:auto; min-height:36px; font-size:13px; }
 
-    /* LAYOUT NOTE & PLAYER LRC */
+    /* CONTROLLI E NOTE */
     .notes-controls { display:flex; justify-content:space-between; align-items:center; margin-top:10px; margin-bottom:8px; gap:8px; flex-wrap:wrap; }
     .font-select { width:auto; min-height:36px; height:36px; font-size:13px; padding:0 8px; }
 
@@ -58,7 +62,7 @@
 
     .notes-wrapper { display:flex; gap:8px; align-items:stretch; flex-grow:1; height:60vh; min-height:350px; }
     
-    /* BOX VISUALIZZAZIONE TESTO LRC */
+    /* VISUALIZZAZIONE TESTO LRC */
     .lrc-display { background:#090b0e; border:1px solid var(--border); border-radius:8px; padding:16px; font-size:18px; color:#e2e8f0; height:100%; overflow-y:auto; flex-grow:1; box-sizing:border-box; scroll-behavior:smooth; }
     .lrc-line { padding:6px 8px; border-radius:6px; transition:all 0.2s ease; margin-bottom:4px; opacity:0.6; }
     .lrc-line.active { background:#284263; color:#ffffff; font-weight:bold; opacity:1; transform:scale(1.01); }
@@ -70,31 +74,34 @@
     
     .btn-toggle-edit { background:#2a3342; border-color:#3b475a; color:#d1d5db; min-height:36px; font-size:13px; width:auto; margin-top:0; }
     .btn-fullscreen { background:#1f324d; border-color:#3d8bfd; color:#7cb3ff; min-height:36px; font-size:13px; width:auto; margin-top:0; }
+    .btn-rotate { background:#2c3a2f; border-color:#48634e; color:#95e0a1; min-height:36px; font-size:13px; width:auto; margin-top:0; }
     .btn-load-lrc { background:#332940; border-color:#5c4775; color:#d8b4fe; min-height:36px; font-size:13px; width:auto; margin-top:0; }
     .btn-save-notes { background:#1e3a5f; color:#93c5fd; border-color:#2b4c7e; min-height:44px; font-size:14px; margin-top:8px; display:none; }
 
-    /* STILI FULLSCREEN TOTALE ADATTATIVO IN ORIZZONTALE E VERTICALE */
-    :fullscreen #notesContainer,
-    :-webkit-full-screen #notesContainer {
-      position: fixed !important;
-      top: 0 !important;
-      left: 0 !important;
-      width: 100vw !important;
-      height: 100vh !important;
-      background: var(--bg) !important;
-      padding: 12px !important;
-      margin: 0 !important;
-      display: flex !important;
-      flex-direction: column !important;
-      box-sizing: border-box !important;
-      z-index: 999999 !important;
+    /* MODALITÀ FULLSCREEN APPLICATA A TUTTA LA PAGINA */
+    :fullscreen body,
+    :-webkit-full-screen body {
+      padding: 10px !important;
+      overflow-x: hidden;
     }
 
-    :fullscreen .notes-wrapper,
-    :-webkit-full-screen .notes-wrapper {
-      flex: 1 !important;
-      height: auto !important;
-      min-height: 0 !important;
+    :fullscreen .container,
+    :-webkit-full-screen .container {
+      max-width: 100% !important;
+      width: 100% !important;
+      margin: 0 !important;
+    }
+
+    /* ROTAZIONE CSS FORZATA DI FALLBACK */
+    body.rotate-90 {
+      transform: rotate(90deg);
+      transform-origin: bottom left;
+      position: absolute;
+      top: -100vw;
+      left: 0;
+      width: 100vh !important;
+      height: 100vw !important;
+      overflow-x: hidden;
     }
 
     .log { height:120px; overflow:auto; background:#090b0e; border-radius:10px; padding:10px; font-family:monospace; font-size:12px; color:#bfc5cf; white-space:pre-wrap; }
@@ -105,6 +112,12 @@
 <div class="container">
   <a href="index.html" class="back">← Menu Principale</a>
   <h1>Scaletta, Preset & Testi</h1>
+
+  <!-- BARRA DI COMANDO SCHERMO TOTALE E ROTAZIONE -->
+  <div class="section" style="display:flex; gap:10px; flex-wrap:wrap;">
+    <button class="btn-fullscreen" style="flex:1;" onclick="toggleAppFullscreen()">⛶ Tutto lo Schermo</button>
+    <button class="btn-rotate" style="flex:1;" onclick="toggleAppRotation()">🔄 Ruota Schermo</button>
+  </div>
 
   <!-- CONNESSIONE BLE -->
   <div class="section">
@@ -146,7 +159,6 @@
         </div>
 
         <div class="notes-controls">
-          <button class="btn-fullscreen" id="btnFullscreen" onclick="toggleFullscreen()">⛶ Schermo Intero</button>
           <button class="btn-load-lrc" onclick="document.getElementById('lrcFileInput').click()">📂 Carica File .LRC</button>
           <button class="btn-toggle-edit" id="btnEditMode" onclick="toggleEditMode()">✏️ Modifica Codice</button>
 
@@ -302,6 +314,48 @@
       `;
       container.appendChild(div);
     });
+  }
+
+  /* =========================================================
+     GESTIONE FULLSCREEN TOTALE ED ORIENTAMENTO
+     ========================================================= */
+
+  function toggleAppFullscreen() {
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      const docEl = document.documentElement;
+      if (docEl.requestFullscreen) {
+        docEl.requestFullscreen();
+      } else if (docEl.webkitRequestFullscreen) {
+        docEl.webkitRequestFullscreen();
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      }
+    }
+  }
+
+  async function toggleAppRotation() {
+    // Prova ad utilizzare Screen Orientation API nativa (smartphone/tablet)
+    if (screen.orientation && screen.orientation.lock) {
+      try {
+        if (screen.orientation.type.startsWith("portrait")) {
+          await screen.orientation.lock("landscape");
+          log("Orientamento impostato: Orizzontale");
+        } else {
+          await screen.orientation.lock("portrait");
+          log("Orientamento impostato: Verticale");
+        }
+        return;
+      } catch (err) {
+        log("Rotazione nativa non supportata o bloccata dal browser. Uso il fallback CSS.");
+      }
+    }
+
+    // Fallback con rotazione CSS della pagina intera
+    document.body.classList.toggle("rotate-90");
   }
 
   /* =========================================================
@@ -468,47 +522,6 @@
   }
 
   /* =========================================================
-     GESTIONE SCHERMO INTERO REALE (FULLSCREEN API NATIVA)
-     ========================================================= */
-
-  function toggleFullscreen() {
-    const container = document.getElementById("notesContainer");
-
-    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-      if (container.requestFullscreen) {
-        container.requestFullscreen();
-      } else if (container.webkitRequestFullscreen) {
-        container.webkitRequestFullscreen();
-      }
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      } else if (document.webkitExitFullscreen) {
-        document.webkitExitFullscreen();
-      }
-    }
-  }
-
-  // Aggiorna lo stato visivo del pulsante quando si entra/esce dallo schermo intero
-  document.addEventListener("fullscreenchange", updateFullscreenBtn);
-  document.addEventListener("webkitfullscreenchange", updateFullscreenBtn);
-
-  function updateFullscreenBtn() {
-    const btn = document.getElementById("btnFullscreen");
-    if (document.fullscreenElement || document.webkitFullscreenElement) {
-      btn.textContent = "✕ Chiudi Fullscreen";
-      btn.style.background = "#512222";
-      btn.style.borderColor = "#632828";
-      btn.style.color = "#ff4d4d";
-    } else {
-      btn.textContent = "⛶ Schermo Intero";
-      btn.style.background = "#1f324d";
-      btn.style.borderColor = "#3d8bfd";
-      btn.style.color = "#7cb3ff";
-    }
-  }
-
-  /* =========================================================
      PARSER ED ESECUZIONE FORMATO .LRC
      ========================================================= */
 
@@ -660,7 +673,6 @@
       activeSongIndex = null;
       lyricsBtn.style.display = "none";
       notesContainer.style.display = "none";
-      if (document.fullscreenElement) toggleFullscreen();
       return;
     }
 
