@@ -70,6 +70,7 @@
     
     .btn-toggle-edit { background:#2a3342; border-color:#3b475a; color:#d1d5db; min-height:36px; font-size:13px; width:auto; margin-top:0; }
     .btn-fullscreen { background:#1f324d; border-color:#3d8bfd; color:#7cb3ff; min-height:36px; font-size:13px; width:auto; margin-top:0; }
+    .btn-load-lrc { background:#332940; border-color:#5c4775; color:#d8b4fe; min-height:36px; font-size:13px; width:auto; margin-top:0; }
     .btn-save-notes { background:#1e3a5f; color:#93c5fd; border-color:#2b4c7e; min-height:44px; font-size:14px; margin-top:8px; display:none; }
 
     /* STILI PER MODALITÀ SCHERMO INTERO */
@@ -144,7 +145,11 @@
 
         <div class="notes-controls">
           <button class="btn-fullscreen" id="btnFullscreen" onclick="toggleFullscreen()">⛶ Schermo Intero</button>
-          <button class="btn-toggle-edit" id="btnEditMode" onclick="toggleEditMode()">✏️ Modifica Codice LRC/Testo</button>
+          <button class="btn-load-lrc" onclick="document.getElementById('lrcFileInput').click()">📂 Carica File .LRC</button>
+          <button class="btn-toggle-edit" id="btnEditMode" onclick="toggleEditMode()">✏️ Modifica Codice</button>
+
+          <input type="file" id="lrcFileInput" accept=".lrc,.txt" style="display:none;" onchange="handleLrcFileUpload(event)">
+
           <select id="fontSizeSelect" class="font-select" onchange="changeFontSize(this.value)">
             <option value="14px">Dimensione: Piccola</option>
             <option value="18px" selected>Dimensione: Normale</option>
@@ -158,7 +163,7 @@
           <div id="lrcDisplay" class="lrc-display"></div>
           
           <!-- EDITOR RAW PER TESTO CON TIMING .LRC -->
-          <textarea id="songNotes" class="notes-editor" placeholder="Incolla qui il testo con timing in formato .lrc [00:12.50]..." oninput="onNotesInput()"></textarea>
+          <textarea id="songNotes" class="notes-editor" placeholder="Incolla o carica un file .lrc [00:12.50]..." oninput="onNotesInput()"></textarea>
 
           <div class="scroll-btns">
             <button class="btn-scroll" onclick="scrollNotes('up')">▲</button>
@@ -176,6 +181,13 @@
     <label id="formLabel">Aggiungi Nuovo Brano</label>
     <input type="text" id="newTitle" placeholder="Titolo Canzone ed Artista (es. Hotel California - Eagles)">
     <input type="number" id="newPreset" placeholder="Numero Preset VoiceLive (es. 42)" min="1" max="384">
+    
+    <div style="margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+      <label style="margin:0;">Testo / Note (Supporta file .LRC):</label>
+      <button class="btn-load-lrc" style="padding:4px 8px; min-height:28px;" onclick="document.getElementById('newFormLrcFile').click()">📂 Importa File .LRC</button>
+      <input type="file" id="newFormLrcFile" accept=".lrc,.txt" style="display:none;" onchange="handleNewFormLrcUpload(event)">
+    </div>
+
     <textarea id="newNotes" placeholder="Note o testo in formato .lrc [00:10.00] Inizio canto..."></textarea>
     
     <button id="btnSave" class="btn-add" onclick="saveSong()">+ Salva in Scaletta</button>
@@ -288,6 +300,45 @@
       `;
       container.appendChild(div);
     });
+  }
+
+  /* =========================================================
+     GESTIONE CARICAMENTO FILE .LRC
+     ========================================================= */
+
+  function handleLrcFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const content = e.target.result;
+      document.getElementById("songNotes").value = content;
+      
+      parsedLrc = parseLRC(content);
+      renderLrcDisplay();
+      
+      const hasTiming = parsedLrc.some(item => item.time !== null);
+      document.getElementById("playerBar").style.display = hasTiming ? "flex" : "none";
+      
+      onNotesInput(); // Mostra il pulsante di salvataggio
+      log(`File .LRC caricato: ${file.name}`);
+      event.target.value = "";
+    };
+    reader.readAsText(file);
+  }
+
+  function handleNewFormLrcUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById("newNotes").value = e.target.result;
+      log(`File .LRC inserito nel modulo: ${file.name}`);
+      event.target.value = "";
+    };
+    reader.readAsText(file);
   }
 
   /* =========================================================
@@ -561,7 +612,7 @@
     } else {
       rawEditor.style.display = "none";
       lrcDisplay.style.display = "block";
-      btn.textContent = "✏️ Modifica Codice LRC/Testo";
+      btn.textContent = "✏️ Modifica Codice";
       
       parsedLrc = parseLRC(rawEditor.value);
       renderLrcDisplay();
@@ -611,7 +662,7 @@
       isRawEditMode = false;
       document.getElementById("lrcDisplay").style.display = "block";
       notesArea.style.display = "none";
-      document.getElementById("btnEditMode").textContent = "✏️ Modifica Codice LRC/Testo";
+      document.getElementById("btnEditMode").textContent = "✏️ Modifica Codice";
 
       renderLrcDisplay();
       saveNotesBtn.style.display = "none";
