@@ -65,7 +65,6 @@
     .yt-embed-box input { margin-bottom:6px; font-size:14px; min-height:38px; }
     .yt-player-frame { width:100%; height:120px; border-radius:6px; border:none; display:none; margin-top:6px; }
 
-    /* Layout a 2 colonne affiancate */
     .notes-wrapper { display:flex; gap:10px; align-items:stretch; height:60vh; min-height:380px; }
     
     .lrc-display { background:#090b0e; border:1px solid var(--border); border-radius:8px; padding:14px; font-size:16px; color:#e2e8f0; height:100%; overflow-y:auto; flex:1; box-sizing:border-box; scroll-behavior:smooth; }
@@ -269,22 +268,45 @@
         </div>
 
         <div class="notes-controls">
-          <button class="btn-load-lrc" onclick="document.getElementById('lrcFileInput').click()">📂 Carica File .LRC</button>
-
+          <button class="btn-load-lrc" onclick="document.getElementById('lrcFileInput').click()">📂 Carica .LRC</button>
           <input type="file" id="lrcFileInput" accept=".lrc,.txt" style="display:none;" onchange="handleLrcFileUpload(event)">
 
+          <!-- Selettore Scostamento Timing LRC -->
+          <select id="timeOffsetSelect" class="font-select" style="background:#283545; border-color:#3d8bfd;" onchange="applyTimeOffset(this.value)">
+            <option value="0" selected>Shift Timing: 0s</option>
+            <option value="-5.0">-5.0s (Anticipa)</option>
+            <option value="-4.5">-4.5s</option>
+            <option value="-4.0">-4.0s</option>
+            <option value="-3.5">-3.5s</option>
+            <option value="-3.0">-3.0s</option>
+            <option value="-2.5">-2.5s</option>
+            <option value="-2.0">-2.0s</option>
+            <option value="-1.5">-1.5s</option>
+            <option value="-1.0">-1.0s</option>
+            <option value="-0.5">-0.5s</option>
+            <option value="+0.5">+0.5s (Ritarda)</option>
+            <option value="+1.0">+1.0s</option>
+            <option value="+1.5">+1.5s</option>
+            <option value="+2.0">+2.0s</option>
+            <option value="+2.5">+2.5s</option>
+            <option value="+3.0">+3.0s</option>
+            <option value="+3.5">+3.5s</option>
+            <option value="+4.0">+4.0s</option>
+            <option value="+4.5">+4.5s</option>
+            <option value="+5.0">+5.0s</option>
+          </select>
+
           <select id="fontSizeSelect" class="font-select" onchange="changeFontSize(this.value)">
-            <option value="14px">Dimensione: Piccola</option>
-            <option value="16px" selected>Dimensione: Normale</option>
-            <option value="20px">Dimensione: Grande</option>
-            <option value="26px">Dimensione: Molto Grande</option>
-            <option value="32px">Dimensione: Gigante</option>
+            <option value="14px">Dim.: Piccola</option>
+            <option value="16px" selected>Dim.: Normale</option>
+            <option value="20px">Dim.: Grande</option>
+            <option value="26px">Dim.: Molto Grande</option>
+            <option value="32px">Dim.: Gigante</option>
           </select>
 
           <button class="btn-close-fullscreen" onclick="toggleLyricsFullscreen()">❌ Chiudi Schermo Intero</button>
         </div>
 
-        <!-- 2 colonne affiancate: Sinistra (Testo Pulito) / Destra (Codice Editabile riga per riga) -->
         <div class="notes-wrapper">
           <div id="lrcDisplay" class="lrc-display"></div>
           <div id="codeEditor" class="notes-editor"></div>
@@ -295,7 +317,7 @@
           </div>
         </div>
 
-        <button id="btnSaveLiveNotes" class="btn-save-notes" onclick="saveLiveNotes()">💾 Salva Codice LRC / Note</button>
+        <button id="btnSaveLiveNotes" class="btn-save-notes" onclick="saveLiveNotes()">💾 Salva Codice LRC / Note Modificate</button>
         <button id="btnFullscreenLyrics" class="btn-fullscreen-lyrics" onclick="toggleLyricsFullscreen()">🖥️ Testo a Schermo Intero</button>
       </div>
     </div>
@@ -352,7 +374,7 @@
   let timerInterval = null;
   let ytPlayer = null;
 
-  const lrcOffsetSeconds = 2.0;
+  const lrcAdvanceSeconds = 1.0;
 
   window.addEventListener("load", () => {
     loadSongsFromStorage();
@@ -476,6 +498,7 @@
       if (activeSongIndex !== null) {
         songs[activeSongIndex].notes = content;
       }
+      document.getElementById("timeOffsetSelect").value = "0";
       parsedLrc = parseLRC(content);
       renderLrcDisplay();
       renderCodeEditor(content);
@@ -662,6 +685,48 @@
     return result.sort((a, b) => (a.time === null ? 1 : b.time === null ? -1 : a.time - b.time));
   }
 
+  // Funzione per applicare lo scostamento del timing (+/- secondi)
+  function applyTimeOffset(offsetSecStr) {
+    const offset = parseFloat(offsetSecStr);
+    if (isNaN(offset) || offset === 0) return;
+
+    const rawContent = getRawContentFromEditor();
+    const lines = rawContent.split('\n');
+    const timeRegex = /\[(\d{2}):(\d{2})\.(\d{2,3})\]/;
+    const updatedLines = [];
+
+    lines.forEach(line => {
+      const match = timeRegex.exec(line);
+      if (match) {
+        const min = parseInt(match[1], 10);
+        const sec = parseInt(match[2], 10);
+        const ms = parseInt(match[3].padEnd(3, '0'), 10);
+        
+        let totalTime = min * 60 + sec + ms / 1000;
+        totalTime = Math.max(0, totalTime + offset); // Impedisce tempi negativi
+
+        const newMin = Math.floor(totalTime / 60);
+        const newSec = Math.floor(totalTime % 60);
+        const newMs = Math.round((totalTime % 1) * 100);
+
+        const formattedTime = `[${String(newMin).padStart(2, '0')}:${String(newSec).padStart(2, '0')}.${String(newMs).padStart(2, '0')}]`;
+        const textOnly = line.replace(timeRegex, '');
+        updatedLines.push(formattedTime + textOnly);
+      } else {
+        updatedLines.push(line);
+      }
+    });
+
+    const newText = updatedLines.join('\n');
+    parsedLrc = parseLRC(newText);
+    renderLrcDisplay();
+    renderCodeEditor(newText);
+    
+    document.getElementById("btnSaveLiveNotes").style.display = "block";
+    document.getElementById("timeOffsetSelect").value = "0"; // Ripristina il selettore dopo l'applicazione
+    log(`Shift timing applicato: ${offset > 0 ? '+' : ''}${offset}s`);
+  }
+
   function renderLrcDisplay() {
     const display = document.getElementById("lrcDisplay");
     display.innerHTML = "";
@@ -690,17 +755,18 @@
     const editor = document.getElementById("codeEditor");
     editor.innerHTML = "";
 
-    if (parsedLrc.length === 0) {
+    const lines = rawText ? rawText.split('\n') : [];
+    if (lines.length === 0) {
       editor.innerHTML = '<div class="code-line" contenteditable="true" oninput="onNotesInput()"></div>';
       return;
     }
 
-    parsedLrc.forEach((item, idx) => {
+    lines.forEach((lineText, idx) => {
       const div = document.createElement("div");
       div.className = "code-line";
       div.id = `code-line-${idx}`;
       div.contentEditable = "true";
-      div.textContent = item.rawLine || "";
+      div.textContent = lineText || "";
       div.oninput = () => onNotesInput();
       editor.appendChild(div);
     });
@@ -850,7 +916,7 @@
 
   function updateLrcHighlight(currentTime) {
     let activeIndex = -1;
-    const effectiveTime = currentTime + lrcOffsetSeconds;
+    const effectiveTime = currentTime + lrcAdvanceSeconds;
 
     for (let i = 0; i < parsedLrc.length; i++) {
       if (parsedLrc[i].time !== null && parsedLrc[i].time <= effectiveTime) {
@@ -861,7 +927,6 @@
     }
 
     if (activeIndex !== -1) {
-      // Evidenziazione Colonna Testo Pulito
       const lrcLines = document.querySelectorAll('.lrc-line');
       const activeLrc = document.getElementById(`lrc-line-${activeIndex}`);
       if (activeLrc && !activeLrc.classList.contains('active')) {
@@ -870,7 +935,6 @@
         activeLrc.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
 
-      // Evidenziazione Colonna Codice LRC
       const codeLines = document.querySelectorAll('.code-line');
       const activeCode = document.getElementById(`code-line-${activeIndex}`);
       if (activeCode && !activeCode.classList.contains('active')) {
@@ -935,6 +999,7 @@
       }
 
       const rawContent = selectedSong.notes || "";
+      document.getElementById("timeOffsetSelect").value = "0";
       parsedLrc = parseLRC(rawContent);
 
       renderLrcDisplay();
