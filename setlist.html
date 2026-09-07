@@ -330,7 +330,6 @@
   let isRawEditMode = false;
   let ytPlayer = null;
 
-  // Offset in secondi per far partire il testo in anticipo (2 secondi)
   const lrcOffsetSeconds = 2.0;
 
   window.addEventListener("load", () => {
@@ -546,24 +545,49 @@
     }
   }
 
-  function exportSetlist() {
+  async function exportSetlist() {
     if (songs.length === 0) {
       alert("La scaletta è vuota, non c'è nulla da esportare.");
       return;
     }
 
     const jsonStr = JSON.stringify(songs, null, 2);
-    const blob = new Blob([jsonStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    
     const date = new Date().toISOString().slice(0, 10);
+    const fileName = `scaletta_voicelive_${date}.json`;
+    const blob = new Blob([jsonStr], { type: "application/json" });
+
+    // Se il dispositivo supporta la condivisione/salvataggio nativo (es. Smartphone)
+    if (navigator.canShare && navigator.share) {
+      try {
+        const file = new File([blob], fileName, { type: "application/json" });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: 'Esporta Scaletta VoiceLive',
+            files: [file]
+          });
+          log("Scaletta salvata o condivisa con successo.");
+          return;
+        }
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error(err);
+        } else {
+          return;
+        }
+      }
+    }
+
+    // Download classico per PC o browser senza Share API
+    const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `scaletta_voicelive_${date}.json`;
+    a.download = fileName;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     
-    URL.revokeObjectURL(url);
-    log("Scaletta esportata con successo.");
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    log("Scaletta esportata nella cartella Download.");
   }
 
   function importSetlist(event) {
@@ -631,7 +655,6 @@
       div.id = `lrc-line-${idx}`;
       div.textContent = item.text;
 
-      // Abilita la selezione della strofa e il salto audio
       if (item.time !== null) {
         div.classList.add("clickable");
         div.onclick = () => jumpToLrcTime(item.time);
