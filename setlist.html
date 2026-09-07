@@ -57,7 +57,7 @@
 
     /* Player layout riorganizzato */
     .player-container { display:flex; flex-direction:column; gap:8px; margin-bottom:12px; }
-    .player-row { display:flex; gap:8px; }
+    .player-row { display:flex; gap:8px; align-items:center; }
     .btn-play { background:#214e30; color:#8cffae; border-color:#28452f; min-height:46px; flex:1; font-size:15px; }
     .btn-stop { background:#512222; color:#ff4d4d; border-color:#632828; min-height:46px; flex:1; font-size:15px; }
     .btn-ytmusic { background:#4a1111; color:#ff9999; border-color:#732424; min-height:46px; width:100%; font-size:15px; text-decoration:none; display:flex; align-items:center; justify-content:center; border-radius:10px; font-weight:bold; box-sizing:border-box; }
@@ -131,6 +131,49 @@
       margin: 0 !important;
     }
 
+    /* --- STILI SPECIFICI MODALITÀ SCHERMO INTERO TESTI --- */
+    .fullscreen-mode .btn-ytmusic,
+    .fullscreen-mode .yt-embed-box label,
+    .fullscreen-mode .yt-embed-box > div {
+      display: none !important;
+    }
+
+    .fullscreen-mode .player-container {
+      margin-bottom: 5px;
+    }
+
+    .fullscreen-mode .yt-embed-box {
+      margin-top: 0;
+      padding: 0;
+      border: none;
+      background: transparent;
+    }
+
+    .fullscreen-mode .yt-player-frame {
+      height: 50px !important;
+      max-width: 200px;
+      margin: 0 auto;
+    }
+
+    .fullscreen-mode .lrc-display {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-size: 26px;
+    }
+
+    .fullscreen-mode .lrc-line {
+      text-align: center;
+      width: 100%;
+    }
+
+    .fullscreen-mode .notes-controls {
+      justify-content: center;
+      gap: 12px;
+    }
+
     body.rotate-90 {
       transform: rotate(90deg);
       transform-origin: bottom left;
@@ -185,7 +228,7 @@
       <a id="lyricsLink" class="btn-lyrics" href="#" target="_blank" style="display:none;">🔍 Cerca testo su Google</a>
       
       <div id="notesContainer" style="display:none;">
-        <!-- Player Bar riorganizzata con YT Music sotto Play/Stop e caricamento link -->
+        <!-- Player Bar riorganizzata -->
         <div class="player-container" id="playerContainer">
           <div class="player-row">
             <button id="btnPlay" class="btn-play" onclick="togglePlay()">▶ PLAY</button>
