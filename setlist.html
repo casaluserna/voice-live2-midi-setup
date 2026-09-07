@@ -74,11 +74,47 @@
     
     .btn-toggle-edit { background:#2a3342; border-color:#3b475a; color:#d1d5db; min-height:36px; font-size:13px; width:auto; margin-top:0; }
     .btn-fullscreen { background:#1f324d; border-color:#3d8bfd; color:#7cb3ff; min-height:36px; font-size:13px; width:auto; margin-top:0; }
+    .btn-fullscreen-lyrics { background:#1c4d3b; border-color:#25d366; color:#a3ffd2; min-height:44px; font-size:15px; width:100%; margin-top:10px; }
     .btn-rotate { background:#2c3a2f; border-color:#48634e; color:#95e0a1; min-height:36px; font-size:13px; width:auto; margin-top:0; }
     .btn-load-lrc { background:#332940; border-color:#5c4775; color:#d8b4fe; min-height:36px; font-size:13px; width:auto; margin-top:0; }
     .btn-save-notes { background:#1e3a5f; color:#93c5fd; border-color:#2b4c7e; min-height:44px; font-size:14px; margin-top:8px; display:none; }
 
-    /* MODALITÀ FULLSCREEN APPLICATA A TUTTA LA PAGINA */
+    /* MODALITÀ FULLSCREEN TESTO DEDICATA */
+    .fullscreen-mode #notesContainer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 9999;
+      background: var(--bg);
+      padding: 15px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .fullscreen-mode .notes-wrapper {
+      height: 100%;
+      min-height: 0;
+    }
+
+    .btn-close-fullscreen {
+      display: none;
+      background: #512222;
+      color: #ff4d4d;
+      border-color: #632828;
+      min-height: 36px;
+      font-size: 13px;
+      width: auto;
+      margin-top: 0;
+    }
+
+    .fullscreen-mode .btn-close-fullscreen {
+      display: block;
+    }
+
+    /* MODALITÀ FULLSCREEN BROWSER */
     :fullscreen body,
     :-webkit-full-screen body {
       padding: 10px !important;
@@ -115,7 +151,7 @@
 
   <!-- BARRA DI COMANDO SCHERMO TOTALE E ROTAZIONE -->
   <div class="section" style="display:flex; gap:10px; flex-wrap:wrap;">
-    <button class="btn-fullscreen" style="flex:1;" onclick="toggleAppFullscreen()">⛶ Tutto lo Schermo</button>
+    <button class="btn-fullscreen" style="flex:1;" onclick="toggleAppFullscreen()">⛶ Schermo Intero App</button>
     <button class="btn-rotate" style="flex:1;" onclick="toggleAppRotation()">🔄 Ruota Schermo</button>
   </div>
 
@@ -148,7 +184,7 @@
     </div>
 
     <div style="margin-top:15px;">
-      <a id="lyricsLink" class="btn-lyrics" href="#" target="_blank" style="display:none;">🔍 Cerca testo su Google</a>
+      <a id="lyricsLink" class="btn-lyrics" href="#" target="_blank" style="display:none; margin-bottom:10px;">🔍 Cerca testo su Google</a>
       
       <!-- CONTROLLI LRC E TELEPROMPTER -->
       <div id="notesContainer" style="display:none;">
@@ -171,6 +207,8 @@
             <option value="28px">Dimensione: Molto Grande</option>
             <option value="36px">Dimensione: Gigante</option>
           </select>
+
+          <button class="btn-close-fullscreen" onclick="toggleLyricsFullscreen()">❌ Chiudi Schermo Intero</button>
         </div>
 
         <div class="notes-wrapper">
@@ -187,6 +225,9 @@
         </div>
 
         <button id="btnSaveLiveNotes" class="btn-save-notes" onclick="saveLiveNotes()">💾 Salva Codice LRC / Note</button>
+        
+        <!-- PULSANTE PER VISTA A PAGINA INTERA DEL TESTO -->
+        <button id="btnFullscreenLyrics" class="btn-fullscreen-lyrics" onclick="toggleLyricsFullscreen()">🖥️ Testo a Schermo Intero</button>
       </div>
     </div>
   </div>
@@ -260,7 +301,6 @@
     const btn = document.getElementById("btnOut");
     btn.textContent = "RICERCA SK-7 IN CORSO...";
 
-    // Tenta riconnessione con i dispositivi già associati
     if (navigator.bluetooth && navigator.bluetooth.getDevices) {
       try {
         const devices = await navigator.bluetooth.getDevices();
@@ -280,7 +320,6 @@
       }
     }
 
-    // Se non trova dispositivi salvati o non supportato
     connectOut(true);
   }
 
@@ -357,8 +396,12 @@
   }
 
   /* =========================================================
-     GESTIONE FULLSCREEN TOTALE ED ORIENTAMENTO
+     GESTIONE FULLSCREEN TESTO & BROWSER
      ========================================================= */
+
+  function toggleLyricsFullscreen() {
+    document.body.classList.toggle("fullscreen-mode");
+  }
 
   function toggleAppFullscreen() {
     if (!document.fullscreenElement && !document.webkitFullscreenElement) {
@@ -711,6 +754,7 @@
       activeSongIndex = null;
       lyricsBtn.style.display = "none";
       notesContainer.style.display = "none";
+      document.body.classList.remove("fullscreen-mode");
       return;
     }
 
