@@ -14,6 +14,7 @@
       --green:#25d366; 
       --red:#ff4d4d; 
       --blue:#3d8bfd;
+      --yt-red:#ff0000;
       --border:#30353f; 
     }
     * { box-sizing:border-box; }
@@ -56,9 +57,11 @@
     .notes-controls { display:flex; justify-content:space-between; align-items:center; margin-top:10px; margin-bottom:8px; gap:8px; flex-wrap:wrap; }
     .font-select { width:auto; min-height:36px; height:36px; font-size:13px; padding:0 8px; }
 
+    /* PLAYER BAR CON PULSANTE YOUTUBE MUSIC INTEGRATO */
     .player-bar { display:flex; gap:8px; margin-bottom:10px; }
-    .btn-play { background:#214e30; color:#8cffae; border-color:#28452f; min-height:44px; flex:2; }
-    .btn-stop { background:#512222; color:#ff4d4d; border-color:#632828; min-height:44px; flex:1; }
+    .btn-play { background:#214e30; color:#8cffae; border-color:#28452f; min-height:44px; flex:1.2; font-size:14px; padding:0 6px; }
+    .btn-stop { background:#512222; color:#ff4d4d; border-color:#632828; min-height:44px; flex:0.8; font-size:14px; padding:0 6px; }
+    .btn-ytmusic { background:#4a1111; color:#ff9999; border-color:#732424; min-height:44px; flex:1; font-size:14px; padding:0 6px; text-decoration:none; display:flex; align-items:center; justify-content:center; border-radius:10px; font-weight:bold; box-sizing:border-box; }
 
     .notes-wrapper { display:flex; gap:8px; align-items:stretch; flex-grow:1; height:60vh; min-height:350px; }
     
@@ -189,9 +192,11 @@
       <!-- CONTROLLI LRC E TELEPROMPTER -->
       <div id="notesContainer" style="display:none;">
         
+        <!-- BARRA PLAYER COMPATTA CON TASTO PLAY RIDOTTO E NUOVO TASTO YT MUSIC -->
         <div class="player-bar" id="playerBar" style="display:none;">
-          <button id="btnPlay" class="btn-play" onclick="togglePlay()">▶ PLAY SCORRIMENTO</button>
+          <button id="btnPlay" class="btn-play" onclick="togglePlay()">▶ PLAY</button>
           <button id="btnStop" class="btn-stop" onclick="stopPlay()">⏹ STOP</button>
+          <a id="ytMusicBtn" class="btn-ytmusic" href="#" target="_blank">🔴 YT Music</a>
         </div>
 
         <div class="notes-controls">
@@ -288,8 +293,6 @@
   window.addEventListener("load", () => {
     loadSongsFromStorage();
     renderSongsUI();
-    
-    // Tenta la connessione automatica all'avvio della pagina
     autoConnectSK7();
   });
 
@@ -674,7 +677,7 @@
   function pausePlay() {
     isPlaying = false;
     clearInterval(timerInterval);
-    document.getElementById("btnPlay").textContent = "▶ RIPRENDI SCORRIMENTO";
+    document.getElementById("btnPlay").textContent = "▶ PLAY";
     document.getElementById("btnPlay").style.background = "#214e30";
   }
 
@@ -682,7 +685,7 @@
     isPlaying = false;
     clearInterval(timerInterval);
     window.currentLrcTime = 0;
-    document.getElementById("btnPlay").textContent = "▶ PLAY SCORRIMENTO";
+    document.getElementById("btnPlay").textContent = "▶ PLAY";
     document.getElementById("btnPlay").style.background = "#214e30";
     
     document.querySelectorAll('.lrc-line').forEach(el => el.classList.remove('active'));
@@ -746,6 +749,7 @@
     const notesContainer = document.getElementById("notesContainer");
     const notesArea = document.getElementById("songNotes");
     const playerBar = document.getElementById("playerBar");
+    const ytMusicBtn = document.getElementById("ytMusicBtn");
     const saveNotesBtn = document.getElementById("btnSaveLiveNotes");
 
     stopPlay();
@@ -765,10 +769,15 @@
       sendPresetChange(selectedSong.preset);
       log(`BRANO CARICATO: ${selectedSong.title}`);
 
-      const query = encodeURIComponent(`${selectedSong.title} lyrics testo`);
-      lyricsBtn.href = `https://www.google.com/search?q=${query}`;
+      // Ricerca testo Google
+      const queryGoogle = encodeURIComponent(`${selectedSong.title} lyrics testo`);
+      lyricsBtn.href = `https://www.google.com/search?q=${queryGoogle}`;
       lyricsBtn.textContent = `🔍 Cerca testo di "${selectedSong.title}"`;
       lyricsBtn.style.display = "block";
+
+      // Ricerca YouTube Music
+      const queryYT = encodeURIComponent(selectedSong.title);
+      ytMusicBtn.href = `https://music.youtube.com/search?q=${queryYT}`;
 
       const rawContent = selectedSong.notes || "";
       notesArea.value = rawContent;
