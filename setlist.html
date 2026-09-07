@@ -21,7 +21,6 @@
     html, body { width: 100%; min-height: 100vh; margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: Arial, sans-serif; }
     body { padding: 18px; }
     
-    /* CONTAINER FLUIDO ADATTABILE */
     .container { max-width: 800px; margin: auto; transition: max-width 0.3s ease; }
     
     a.back { color:var(--blue); text-decoration:none; display:inline-block; margin-bottom:15px; font-size:14px; }
@@ -53,11 +52,9 @@
     .btn-edit { background:#284263; color:#7cb3ff; border:none; padding:6px 10px; border-radius:6px; width:auto; min-height:36px; font-size:13px; }
     .btn-del { background:#512222; color:#ff4d4d; border:none; padding:6px 10px; border-radius:6px; width:auto; min-height:36px; font-size:13px; }
 
-    /* CONTROLLI E NOTE */
     .notes-controls { display:flex; justify-content:space-between; align-items:center; margin-top:10px; margin-bottom:8px; gap:8px; flex-wrap:wrap; }
     .font-select { width:auto; min-height:36px; height:36px; font-size:13px; padding:0 8px; }
 
-    /* PLAYER BAR CON PULSANTE YOUTUBE MUSIC INTEGRATO */
     .player-bar { display:flex; gap:8px; margin-bottom:10px; }
     .btn-play { background:#214e30; color:#8cffae; border-color:#28452f; min-height:44px; flex:1.2; font-size:14px; padding:0 6px; }
     .btn-stop { background:#512222; color:#ff4d4d; border-color:#632828; min-height:44px; flex:0.8; font-size:14px; padding:0 6px; }
@@ -65,7 +62,6 @@
 
     .notes-wrapper { display:flex; gap:8px; align-items:stretch; flex-grow:1; height:60vh; min-height:350px; }
     
-    /* VISUALIZZAZIONE TESTO LRC */
     .lrc-display { background:#090b0e; border:1px solid var(--border); border-radius:8px; padding:16px; font-size:18px; color:#e2e8f0; height:100%; overflow-y:auto; flex-grow:1; box-sizing:border-box; scroll-behavior:smooth; }
     .lrc-line { padding:6px 8px; border-radius:6px; transition:all 0.2s ease; margin-bottom:4px; opacity:0.6; }
     .lrc-line.active { background:#284263; color:#ffffff; font-weight:bold; opacity:1; transform:scale(1.01); }
@@ -82,7 +78,6 @@
     .btn-load-lrc { background:#332940; border-color:#5c4775; color:#d8b4fe; min-height:36px; font-size:13px; width:auto; margin-top:0; }
     .btn-save-notes { background:#1e3a5f; color:#93c5fd; border-color:#2b4c7e; min-height:44px; font-size:14px; margin-top:8px; display:none; }
 
-    /* MODALITÀ FULLSCREEN TESTO DEDICATA */
     .fullscreen-mode #notesContainer {
       position: fixed;
       top: 0;
@@ -117,7 +112,6 @@
       display: block;
     }
 
-    /* MODALITÀ FULLSCREEN BROWSER */
     :fullscreen body,
     :-webkit-full-screen body {
       padding: 10px !important;
@@ -131,7 +125,6 @@
       margin: 0 !important;
     }
 
-    /* ROTAZIONE CSS FORZATA DI FALLBACK */
     body.rotate-90 {
       transform: rotate(90deg);
       transform-origin: bottom left;
@@ -152,19 +145,16 @@
   <a href="index.html" class="back">← Menu Principale</a>
   <h1>Scaletta, Preset & Testi</h1>
 
-  <!-- BARRA DI COMANDO SCHERMO TOTALE E ROTAZIONE -->
   <div class="section" style="display:flex; gap:10px; flex-wrap:wrap;">
     <button class="btn-fullscreen" style="flex:1;" onclick="toggleAppFullscreen()">⛶ Schermo Intero App</button>
     <button class="btn-rotate" style="flex:1;" onclick="toggleAppRotation()">🔄 Ruota Schermo</button>
   </div>
 
-  <!-- CONNESSIONE BLE -->
   <div class="section">
     <label>Connessione BLE SK-7 OUT</label>
     <button id="btnOut" class="connect" onclick="connectOut()">CONNETTI SK-7 OUT</button>
   </div>
 
-  <!-- CANALE MIDI -->
   <div class="section">
     <label>Canale MIDI</label>
     <select id="midiChannel">
@@ -174,7 +164,6 @@
     </select>
   </div>
 
-  <!-- ESECUZIONE LIVE & TESTO -->
   <div class="section">
     <label>Esecuzione Scaletta Live</label>
     <select id="songSelect" onchange="onSongChange(this.value)">
@@ -189,10 +178,7 @@
     <div style="margin-top:15px;">
       <a id="lyricsLink" class="btn-lyrics" href="#" target="_blank" style="display:none; margin-bottom:10px;">🔍 Cerca testo su Google</a>
       
-      <!-- CONTROLLI LRC E TELEPROMPTER -->
       <div id="notesContainer" style="display:none;">
-        
-        <!-- BARRA PLAYER COMPATTA CON TASTO PLAY RIDOTTO E NUOVO TASTO YT MUSIC -->
         <div class="player-bar" id="playerBar" style="display:none;">
           <button id="btnPlay" class="btn-play" onclick="togglePlay()">▶ PLAY</button>
           <button id="btnStop" class="btn-stop" onclick="stopPlay()">⏹ STOP</button>
@@ -217,10 +203,7 @@
         </div>
 
         <div class="notes-wrapper">
-          <!-- DISPLAY PER TESTO SCORREVOLE -->
           <div id="lrcDisplay" class="lrc-display"></div>
-          
-          <!-- EDITOR RAW PER TESTO CON TIMING .LRC -->
           <textarea id="songNotes" class="notes-editor" placeholder="Incolla o carica un file .lrc [00:12.50]..." oninput="onNotesInput()"></textarea>
 
           <div class="scroll-btns">
@@ -230,14 +213,11 @@
         </div>
 
         <button id="btnSaveLiveNotes" class="btn-save-notes" onclick="saveLiveNotes()">💾 Salva Codice LRC / Note</button>
-        
-        <!-- PULSANTE PER VISTA A PAGINA INTERA DEL TESTO -->
         <button id="btnFullscreenLyrics" class="btn-fullscreen-lyrics" onclick="toggleLyricsFullscreen()">🖥️ Testo a Schermo Intero</button>
       </div>
     </div>
   </div>
 
-  <!-- FORM AGGIUNGI / MODIFICA BRANO -->
   <div class="section">
     <label id="formLabel">Aggiungi Nuovo Brano</label>
     <input type="text" id="newTitle" placeholder="Titolo Canzone ed Artista (es. Hotel California - Eagles)">
@@ -255,7 +235,6 @@
     <button id="btnCancelEdit" class="btn-cancel" onclick="cancelEdit()">Annulla Modifica</button>
   </div>
 
-  <!-- GESTIONE BRANI & BACKUP -->
   <div class="section">
     <label>Brani Memorizzati</label>
     <div id="songsContainer"></div>
@@ -270,7 +249,6 @@
     <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importSetlist(event)">
   </div>
 
-  <!-- LOG -->
   <div class="section">
     <label>LOG MIDI</label>
     <div id="log" class="log"></div>
@@ -283,7 +261,6 @@
   let editingIndex = null;
   let activeSongIndex = null;
 
-  // VARIABILI TELEPROMPTER LRC
   let parsedLrc = [];
   let isPlaying = false;
   let startTime = 0;
@@ -293,14 +270,15 @@
   window.addEventListener("load", () => {
     loadSongsFromStorage();
     renderSongsUI();
-    autoConnectSK7();
+    
+    if (sessionStorage.getItem("sk7_connected") === "true") {
+      autoConnectSK7(true);
+    } else {
+      autoConnectSK7();
+    }
   });
 
-  /* =========================================================
-     GESTIONE CONNESSIONE AUTOMATICA BLE
-     ========================================================= */
-
-  async function autoConnectSK7() {
+  async function autoConnectSK7(isForced = false) {
     const btn = document.getElementById("btnOut");
     btn.textContent = "RICERCA SK-7 IN CORSO...";
 
@@ -315,6 +293,7 @@
           
           btn.textContent = "CONNESSO: " + sk7Device.name;
           btn.style.background = "#28452f";
+          sessionStorage.setItem("sk7_connected", "true");
           log("Connessione automatica riuscita!");
           return;
         }
@@ -323,7 +302,12 @@
       }
     }
 
-    connectOut(true);
+    if (!isForced) {
+      connectOut(true);
+    } else {
+      btn.textContent = "CONNETTI SK-7 OUT";
+      btn.style.background = "#26364f";
+    }
   }
 
   function connectOut(isAuto = false) {
@@ -336,10 +320,12 @@
       if (name) {
         btn.textContent = "CONNESSO: " + name;
         btn.style.background = "#28452f";
+        sessionStorage.setItem("sk7_connected", "true");
         log(`Connesso a: ${name}`);
       } else {
         btn.textContent = "CONNETTI SK-7 OUT";
         btn.style.background = "#26364f";
+        sessionStorage.removeItem("sk7_connected");
       }
     });
   }
@@ -398,10 +384,6 @@
     });
   }
 
-  /* =========================================================
-     GESTIONE FULLSCREEN TESTO & BROWSER
-     ========================================================= */
-
   function toggleLyricsFullscreen() {
     document.body.classList.toggle("fullscreen-mode");
   }
@@ -442,10 +424,6 @@
     document.body.classList.toggle("rotate-90");
   }
 
-  /* =========================================================
-     GESTIONE CARICAMENTO FILE .LRC
-     ========================================================= */
-
   function handleLrcFileUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -480,10 +458,6 @@
     };
     reader.readAsText(file);
   }
-
-  /* =========================================================
-     OPERAZIONI AGGIUNTA / MODIFICA / SALVATAGGIO
-     ========================================================= */
 
   function saveSong() {
     const titleInput = document.getElementById("newTitle");
@@ -551,10 +525,6 @@
     }
   }
 
-  /* =========================================================
-     IMPORTA ED ESPORTA SCALETTA (BACKUP JSON)
-     ========================================================= */
-
   function exportSetlist() {
     if (songs.length === 0) {
       alert("La scaletta è vuota, non c'è nulla da esportare.");
@@ -604,10 +574,6 @@
 
     reader.readAsText(file);
   }
-
-  /* =========================================================
-     PARSER ED ESECUZIONE FORMATO .LRC
-     ========================================================= */
 
   function parseLRC(lrcText) {
     const lines = lrcText.split('\n');
@@ -740,10 +706,6 @@
     }
   }
 
-  /* =========================================================
-     ESECUZIONE BRANO LIVE & CONTROLLI NOTE
-     ========================================================= */
-
   function onSongChange(songIndex) {
     const lyricsBtn = document.getElementById("lyricsLink");
     const notesContainer = document.getElementById("notesContainer");
@@ -769,13 +731,11 @@
       sendPresetChange(selectedSong.preset);
       log(`BRANO CARICATO: ${selectedSong.title}`);
 
-      // Ricerca testo Google
       const queryGoogle = encodeURIComponent(`${selectedSong.title} lyrics testo`);
       lyricsBtn.href = `https://www.google.com/search?q=${queryGoogle}`;
       lyricsBtn.textContent = `🔍 Cerca testo di "${selectedSong.title}"`;
       lyricsBtn.style.display = "block";
 
-      // Ricerca YouTube Music
       const queryYT = encodeURIComponent(selectedSong.title);
       ytMusicBtn.href = `https://music.youtube.com/search?q=${queryYT}`;
 
