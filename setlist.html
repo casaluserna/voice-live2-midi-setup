@@ -33,7 +33,7 @@
     button { cursor:pointer; font-weight:bold; margin-top:8px; }
     button:active { transform:scale(0.98); }
     
-    .connect { background:#26364f; }
+    .connect { background:#26364f; transition: background 0.3s ease; }
     .btn-add { background:#214e30; color:#8cffae; border-color:#28452f; }
     .btn-cancel { background:#3a3f4d; color:#ffffff; border-color:var(--border); display:none; }
     .btn-lyrics { background:#3d2b56; color:#d8b4fe; border-color:#5b3e82; display:block; text-align:center; text-decoration:none; line-height:48px; }
@@ -247,14 +247,54 @@
   window.addEventListener("load", () => {
     loadSongsFromStorage();
     renderSongsUI();
+    
+    // Tenta la connessione automatica all'avvio della pagina
+    autoConnectSK7();
   });
 
-  function connectOut() {
+  /* =========================================================
+     GESTIONE CONNESSIONE AUTOMATICA BLE
+     ========================================================= */
+
+  async function autoConnectSK7() {
+    const btn = document.getElementById("btnOut");
+    btn.textContent = "RICERCA SK-7 IN CORSO...";
+
+    // Tenta riconnessione con i dispositivi già associati
+    if (navigator.bluetooth && navigator.bluetooth.getDevices) {
+      try {
+        const devices = await navigator.bluetooth.getDevices();
+        const sk7Device = devices.find(d => d.name && d.name.includes("SK-7"));
+
+        if (sk7Device) {
+          log(`Dispositivo SK-7 trovato in memoria: ${sk7Device.name}. Tentativo di connessione...`);
+          await sk7Device.gatt.connect();
+          
+          btn.textContent = "CONNESSO: " + sk7Device.name;
+          btn.style.background = "#28452f";
+          log("Connessione automatica riuscita!");
+          return;
+        }
+      } catch (err) {
+        log("Riconnessione automatica non riuscita: " + err.message);
+      }
+    }
+
+    // Se non trova dispositivi salvati o non supportato
+    connectOut(true);
+  }
+
+  function connectOut(isAuto = false) {
+    const btn = document.getElementById("btnOut");
+    if (!isAuto) {
+      btn.textContent = "CONNESSIONE IN CORSO...";
+    }
+
     connectOutputSK7((name) => {
-      const btn = document.getElementById("btnOut");
       if (name) {
         btn.textContent = "CONNESSO: " + name;
         btn.style.background = "#28452f";
+        log(`Connesso a: ${name}`);
       } else {
         btn.textContent = "CONNETTI SK-7 OUT";
         btn.style.background = "#26364f";
@@ -338,7 +378,6 @@
   }
 
   async function toggleAppRotation() {
-    // Prova ad utilizzare Screen Orientation API nativa (smartphone/tablet)
     if (screen.orientation && screen.orientation.lock) {
       try {
         if (screen.orientation.type.startsWith("portrait")) {
@@ -354,7 +393,6 @@
       }
     }
 
-    // Fallback con rotazione CSS della pagina intera
     document.body.classList.toggle("rotate-90");
   }
 
