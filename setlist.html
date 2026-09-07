@@ -48,7 +48,13 @@
     .btn-edit { background:#284263; color:#7cb3ff; border:none; padding:6px 10px; border-radius:6px; width:auto; min-height:36px; font-size:13px; }
     .btn-del { background:#512222; color:#ff4d4d; border:none; padding:6px 10px; border-radius:6px; width:auto; min-height:36px; font-size:13px; }
 
-    .notes-box { background:#090b0e; border:1px solid var(--border); border-radius:8px; padding:12px; font-size:14px; color:#e2e8f0; white-space:pre-wrap; min-height:60px; margin-top:10px; }
+    /* CONTROLLI NOTE E EDIT IN TEMPO REALE */
+    .notes-controls { display:flex; justify-content:space-between; align-items:center; margin-top:10px; margin-bottom:6px; }
+    .notes-controls label { margin-bottom:0; }
+    .font-select { width:auto; min-height:36px; height:36px; font-size:13px; padding:0 8px; }
+
+    .notes-editor { background:#090b0e; border:1px solid var(--border); border-radius:8px; padding:12px; font-size:16px; color:#e2e8f0; min-height:100px; margin-bottom:8px; width:100%; box-sizing:border-box; }
+    .btn-save-notes { background:#1e3a5f; color:#93c5fd; border-color:#2b4c7e; min-height:40px; font-size:14px; display:none; }
 
     .log { height:120px; overflow:auto; background:#090b0e; border-radius:10px; padding:10px; font-family:monospace; font-size:12px; color:#bfc5cf; white-space:pre-wrap; }
   </style>
@@ -89,7 +95,21 @@
 
     <div style="margin-top:15px;">
       <a id="lyricsLink" class="btn-lyrics" href="#" target="_blank" style="display:none;">🔍 Cerca testo su Google</a>
-      <div id="songNotes" class="notes-box" style="display:none;"></div>
+      
+      <!-- AREA NOTE CON REGOLAZIONE DIMENSIONE ED EDITING -->
+      <div id="notesContainer" style="display:none;">
+        <div class="notes-controls">
+          <label>Note Brano (Editabili):</label>
+          <select id="fontSizeSelect" class="font-select" onchange="changeFontSize(this.value)">
+            <option value="14px">Dimensione: Piccola</option>
+            <option value="18px" selected>Dimensione: Normale</option>
+            <option value="22px">Dimensione: Grande</option>
+            <option value="26px">Dimensione: Molto Grande</option>
+          </select>
+        </div>
+        <textarea id="songNotes" class="notes-editor" placeholder="Scrivi qui le note del brano..." oninput="onNotesInput()"></textarea>
+        <button id="btnSaveLiveNotes" class="btn-save-notes" onclick="saveLiveNotes()">💾 Salva Modifiche Note</button>
+      </div>
     </div>
   </div>
 
@@ -130,6 +150,7 @@
 <script>
   let songs = [];
   let editingIndex = null;
+  let activeSongIndex = null;
 
   window.addEventListener("load", () => {
     loadSongsFromStorage();
@@ -199,6 +220,10 @@
     });
   }
 
+  /* =========================================================
+     OPERAZIONI AGGIUNTA / MODIFICA / SALVATAGGIO
+     ========================================================= */
+
   function saveSong() {
     const titleInput = document.getElementById("newTitle");
     const presetInput = document.getElementById("newPreset");
@@ -265,6 +290,10 @@
     }
   }
 
+  /* =========================================================
+     IMPORTA ED ESPORTA SCALETTA (BACKUP JSON)
+     ========================================================= */
+
   function exportSetlist() {
     if (songs.length === 0) {
       alert("La scaletta è vuota, non c'è nulla da esportare.");
@@ -315,18 +344,25 @@
     reader.readAsText(file);
   }
 
+  /* =========================================================
+     ESECUZIONE BRANO LIVE & GESTIONE NOTE
+     ========================================================= */
+
   function onSongChange(songIndex) {
     const lyricsBtn = document.getElementById("lyricsLink");
-    const notesBox = document.getElementById("songNotes");
+    const notesContainer = document.getElementById("notesContainer");
+    const notesArea = document.getElementById("songNotes");
+    const saveNotesBtn = document.getElementById("btnSaveLiveNotes");
 
     if (songIndex === "") {
+      activeSongIndex = null;
       lyricsBtn.style.display = "none";
-      notesBox.style.display = "none";
+      notesContainer.style.display = "none";
       return;
     }
 
-    const index = parseInt(songIndex, 10);
-    const selectedSong = songs[index];
+    activeSongIndex = parseInt(songIndex, 10);
+    const selectedSong = songs[activeSongIndex];
 
     if (selectedSong) {
       sendPresetChange(selectedSong.preset);
@@ -337,13 +373,29 @@
       lyricsBtn.textContent = `🔍 Cerca testo di "${selectedSong.title}"`;
       lyricsBtn.style.display = "block";
 
-      if (selectedSong.notes) {
-        notesBox.textContent = selectedSong.notes;
-        notesBox.style.display = "block";
-      } else {
-        notesBox.style.display = "none";
-      }
+      notesArea.value = selectedSong.notes || "";
+      saveNotesBtn.style.display = "none";
+      notesContainer.style.display = "block";
     }
+  }
+
+  function changeFontSize(size) {
+    document.getElementById("songNotes").style.fontSize = size;
+  }
+
+  function onNotesInput() {
+    document.getElementById("btnSaveLiveNotes").style.display = "block";
+  }
+
+  function saveLiveNotes() {
+    if (activeSongIndex === null) return;
+    
+    const newNotes = document.getElementById("songNotes").value;
+    songs[activeSongIndex].notes = newNotes;
+    saveSongsToStorage();
+
+    document.getElementById("btnSaveLiveNotes").style.display = "none";
+    log(`Note aggiornate per: ${songs[activeSongIndex].title}`);
   }
 
   function prevSong() {
