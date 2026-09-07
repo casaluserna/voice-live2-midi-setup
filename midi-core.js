@@ -1,214 +1,171 @@
-/* =========================================================
-   MIDI CORE - Supporto BLE MIDI (SK-7) + Web MIDI API
-   Modulo condiviso per VoiceLive 2
-   ========================================================= */
+// midi-core.js - Gestione Bluetooth Low Energy (BLE) e MIDI per VoiceLive / SK-7
 
-const BLE_MIDI_SERVICE = "03b80e5a-ede8-4b33-a751-6ce34ec4c700";
-const BLE_MIDI_CHARACTERISTIC = "7772e5db-3868-4112-a1a9-f2669d106bf3";
+let bluetoothDevice = null;
+let midiCharacteristic = null;
+let connectionCallback = null;
 
-// Connessioni BLE SK-7
-let outDevice = null, outServer = null, outCharacteristic = null;
-let inDevice = null, inServer = null, inCharacteristic = null;
+// UUID standard per MIDI BLE (può variare leggermente a seconda del dispositivo, ma questo è lo standard BLE MIDI)
+const MIDI_SERVICE_UUID = '03b80e5a-ede8-4b33-a751-6ce34ec4c700';
+const MIDI_CHARACTERISTIC_UUID = '7772e5db-3868-4112-a1a9-f2669d106bf3';
 
-// Stato degli effetti (CC)
-const fxState = {
-  110: false, 111: false, 112: false, 113: false,
-  114: false, 116: false, 117: false, 118: false
-};
-
-// Logger personalizzabile
-function log(msg) {
-  const box = document.getElementById("log");
-  const time = new Date().toLocaleTimeString();
-  if (box) {
-    box.textContent += `[${time}] ${msg}\n`;
-    box.scrollTop = box.scrollHeight;
+// Funzione di log interna per l'app
+function log(message) {
+  const logDiv = document.getElementById("log");
+  if (logDiv) {
+    const timestamp = new Date().toLocaleTimeString();
+    logDiv.innerHTML += `[${timestamp}] ${message}\n`;
+    logDiv.scrollTop = logDiv.scrollHeight;
   }
-  console.log(`[MIDI Log] ${msg}`);
+  console.log(message);
 }
 
-/* =========================================================
-   CONNESSIONI SK-7 (BLE)
-   ========================================================= */
+/**
+ * Tenta di ripristinare la connessione automaticamente all'avvio senza mostrare popup,
+ * sfruttando i dispositivi già autorizzati dal browser.
+ */
+async function autoConnectSK7(callback) {
+  connectionCallback = callback;
 
-async function connectOutputSK7(onSuccess) {
-  try {
-    log("Ricerca SK-7 OUT...");
-    outDevice = await navigator.bluetooth.requestDevice({
-      filters: [{ services: [BLE_MIDI_SERVICE] }],
-      optionalServices: [BLE_MIDI_SERVICE]
-    });
-
-    log("SK-7 OUT trovato: " + (outDevice.name || "dispositivo"));
-    outServer = await outDevice.gatt.connect();
-    const service = await outServer.getPrimaryService(BLE_MIDI_SERVICE);
-    outCharacteristic = await service.getCharacteristic(BLE_MIDI_CHARACTERISTIC);
-
-    log("SK-7 OUT connesso.");
-    if (onSuccess) onSuccess(outDevice.name || "SK-7");
-
-    outDevice.addEventListener("gattserverdisconnected", () => {
-      outCharacteristic = null;
-      log("SK-7 OUT disconnesso.");
-      if (onSuccess) onSuccess(null);
-    });
-  } catch (error) {
-    console.error(error);
-    log("ERRORE SK-7 OUT: " + error.message);
-  }
-}
-
-async function connectInputSK7(onSuccess) {
-  try {
-    log("Ricerca SK-7 IN...");
-    inDevice = await navigator.bluetooth.requestDevice({
-      filters: [{ services: [BLE_MIDI_SERVICE] }],
-      optionalServices: [BLE_MIDI_SERVICE]
-    });
-
-    log("SK-7 IN trovato: " + (inDevice.name || "dispositivo"));
-    inServer = await inDevice.gatt.connect();
-    const service = await inServer.getPrimaryService(BLE_MIDI_SERVICE);
-    inCharacteristic = await service.getCharacteristic(BLE_MIDI_CHARACTERISTIC);
-
-    await inCharacteristic.startNotifications();
-    inCharacteristic.addEventListener("characteristicvaluechanged", onBLEMidiMessage);
-
-    log("SK-7 IN connesso e in ascolto.");
-    if (onSuccess) onSuccess(inDevice.name || "SK-7");
-
-    inDevice.addEventListener("gattserverdisconnected", () => {
-      inCharacteristic = null;
-      log("SK-7 IN disconnesso.");
-      if (onSuccess) onSuccess(null);
-    });
-  } catch (error) {
-    console.error(error);
-    log("ERRORE SK-7 IN: " + error.message);
-  }
-}
-
-/* =========================================================
-   INVIO MESSAGGI MIDI (BLE OUT / WEB MIDI FALLBACK)
-   ========================================================= */
-
-async function sendMidiBytes(bytes) {
-  const data = Array.from(bytes);
-
-  // 1. Invio tramite BLE SK-7
-  if (outCharacteristic) {
-    try {
-      const timestamp = 0x80;
-      const packet = new Uint8Array([timestamp, timestamp, ...data]);
-
-      if (outCharacteristic.writeValueWithoutResponse) {
-        await outCharacteristic.writeValueWithoutResponse(packet);
-      } else {
-        await outCharacteristic.writeValue(packet);
-      }
-      return true;
-    } catch (err) {
-      log("Errore invio BLE: " + err.message);
-    }
-  }
-
-  // 2. Fallback tramite Web MIDI standard (USB / Cavo)
-  if (typeof navigator.requestMIDIAccess === "function") {
-    try {
-      const midi = await navigator.requestMIDIAccess();
-      let sent = false;
-      midi.outputs.forEach(output => {
-        output.send(data);
-        sent = true;
-      });
-      if (sent) return true;
-    } catch (err) {
-      log("Errore Web MIDI: " + err.message);
-    }
-  }
-
-  log("Nessuna uscita MIDI connessa.");
-  return false;
-}
-
-// Invio Control Change (CC) per gli effetti
-async function sendCC(cc, value) {
-  const channel = parseInt(document.getElementById("midiChannel")?.value || 0, 10);
-  const status = 0xB0 + channel;
-  value = Math.max(0, Math.min(127, value));
-
-  const ok = await sendMidiBytes([status, cc, value]);
-  if (ok) log(`OUT CH${channel + 1} CC${cc} = ${value}`);
-  return ok;
-}
-
-// Helper per pausa asincrona
-const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-
-// Invio Cambio Preset (Program Change + Bank Select)
-async function sendPresetChange(presetNumber) {
-  const preset = parseInt(presetNumber, 10);
-
-  if (isNaN(preset) || preset < 1 || preset > 384) {
-    log("ERRORE: Numero preset non valido (deve essere tra 1 e 384)");
+  if (!navigator.bluetooth || !navigator.bluetooth.getDevices) {
+    log("API navigator.bluetooth.getDevices non supportata da questo browser.");
+    if (connectionCallback) connectionCallback(null);
     return;
   }
 
-  const channel = parseInt(document.getElementById("midiChannel")?.value || 0, 10);
+  try {
+    const devices = await navigator.bluetooth.getDevices();
+    // Cerca un dispositivo precedentemente associato che contenga "SK-7" o compatibile MIDI BLE
+    const sk7Device = devices.find(d => (d.name && d.name.includes("SK-7")) || d.name);
 
-  // Calcolo zero-based (0 - 383)
-  const zeroBased = preset - 1;
+    if (sk7Device) {
+      log(`Dispositivo trovato in cache: ${sk7Device.name}. Riconnessione in corso...`);
+      bluetoothDevice = sk7Device;
+      
+      bluetoothDevice.addEventListener('gattserverdisconnected', onDisconnected);
 
-  // Calcolo Banco (CC 0): 
-  // Preset 1-128  -> Banco 0
-  // Preset 129-256 -> Banco 1
-  // Preset 257-384 -> Banco 2
-  const bank = Math.floor(zeroBased / 128);
+      const server = await bluetoothDevice.gatt.connect();
+      const service = await server.getPrimaryService(MIDI_SERVICE_UUID);
+      midiCharacteristic = await service.getCharacteristic(MIDI_CHARACTERISTIC_UUID);
 
-  // Calcolo Program Change (0 - 127)
-  const program = zeroBased % 128;
-
-  // 1. Invio Bank Select (CC 0)
-  const ccOk = await sendMidiBytes([0xB0 + channel, 0x00, bank]);
-
-  // 2. Pausa indispensabile per permettere al VoiceLive 2 di registrare il cambio banco
-  await delay(40);
-
-  // 3. Invio Program Change (PC)
-  const pcOk = await sendMidiBytes([0xC0 + channel, program]);
-
-  if (ccOk && pcOk) {
-    log(`PRESET INVIATO -> Preset ${preset} [Banco CC0: ${bank}, Program Change: ${program}]`);
-  }
-}
-
-/* =========================================================
-   PARSING MIDI IN (Feedback dal VoiceLive 2 via SK-7 IN)
-   ========================================================= */
-
-function onBLEMidiMessage(event) {
-  const data = new Uint8Array(event.target.value.buffer);
-  if (data.length < 3) return;
-
-  for (let i = 2; i < data.length - 2; i++) {
-    const byte = data[i];
-    if ((byte & 0xF0) === 0xB0) {
-      const channel = byte & 0x0F;
-      const cc = data[i + 1];
-      const value = data[i + 2];
-
-      if (cc < 128 && value < 128) {
-        processIncomingCC(channel, cc, value);
-      }
+      log(`Riconnesso con successo a: ${bluetoothDevice.name}`);
+      if (connectionCallback) connectionCallback(bluetoothDevice.name);
+      return;
     }
+  } catch (err) {
+    log("Impossibile eseguire la riconnessione automatica: " + err.message);
+  }
+
+  if (connectionCallback) connectionCallback(null);
+}
+
+/**
+ * Connessione manuale standard (apre il popup di selezione del browser)
+ */
+async function connectOutputSK7(callback) {
+  connectionCallback = callback;
+
+  try {
+    log("Ricerca dispositivi Bluetooth in corso...");
+    
+    const options = {
+      filters: [{ namePrefix: 'SK-7' }],
+      optionalServices: [MIDI_SERVICE_UUID]
+    };
+
+    // Fallback di ricerca se non trova il filtro esatto
+    try {
+      bluetoothDevice = await navigator.bluetooth.requestDevice(options);
+    } catch (e) {
+      log("Filtro SK-7 non trovato, tentativo di ricerca generica BLE MIDI...");
+      bluetoothDevice = await navigator.bluetooth.requestDevice({
+        acceptAllDevices: true,
+        optionalServices: [MIDI_SERVICE_UUID]
+      });
+    }
+
+    if (!bluetoothDevice) {
+      log("Nessun dispositivo selezionato.");
+      if (connectionCallback) connectionCallback(null);
+      return;
+    }
+
+    bluetoothDevice.addEventListener('gattserverdisconnected', onDisconnected);
+
+    log(`Connessione a ${bluetoothDevice.name || 'Dispositivo'}...`);
+    const server = await bluetoothDevice.gatt.connect();
+
+    log("Ricerca servizio MIDI...");
+    const service = await server.getPrimaryService(MIDI_SERVICE_UUID);
+
+    log("Ricerca caratteristica MIDI...");
+    midiCharacteristic = await service.getCharacteristic(MIDI_CHARACTERISTIC_UUID);
+
+    log(`Connessione BLE completata con successo: ${bluetoothDevice.name}`);
+    if (connectionCallback) connectionCallback(bluetoothDevice.name || "SK-7");
+
+  } catch (error) {
+    log("Errore di connessione BLE: " + error);
+    if (connectionCallback) connectionCallback(null);
   }
 }
 
-function processIncomingCC(channel, cc, value) {
-  log(`IN CH${channel + 1} CC${cc} = ${value}`);
-  if (Object.prototype.hasOwnProperty.call(fxState, cc)) {
-    const state = value >= 64;
-    fxState[cc] = state;
-    if (typeof updateFxUI === "function") updateFxUI(cc, state);
+function onDisconnected(event) {
+  log("Dispositivo BLE disconnesso.");
+  bluetoothDevice = null;
+  midiCharacteristic = null;
+  if (connectionCallback) connectionCallback(null);
+}
+
+/**
+ * Invia un messaggio Program Change MIDI per cambiare il preset sul VoiceLive / SK-7
+ */
+async function sendPresetChange(presetNumber) {
+  if (!midiCharacteristic) {
+    log("Impossibile inviare il preset: Dispositivo SK-7 non connesso.");
+    return;
   }
+
+  try {
+    // Correzione indice preset (i preset MIDI partono da 0 a 127 o banchi estesi)
+    // Scalato sul numero effettivo scelto dall'utente (es. 1 -> 0)
+    let programNumber = parseInt(presetNumber, 10) - 1;
+    if (programNumber < 0) programNumber = 0;
+    if (programNumber > 383) programNumber = 383;
+
+    // Gestione banchi se il preset supera 127 (Standard MIDI Program Change gestisce 128 preset per banco)
+    let bank = Math.floor(programNumber / 128);
+    let prog = programNumber % 128;
+
+    let midiMessages = [];
+
+    // Se il VoiceLive supporta i messaggi di Bank Select (CC 0 / CC 32)
+    if (bank > 0) {
+      midiMessages.push([0x80, 0x80, 0xB0, 0x00, 0x00]); // Header timestamp BLE MIDI + Control Change Bank MSB
+      midiMessages.push([0x80, 0x80, 0xC0 | getActiveChannel(), prog]); // Program Change
+    } else {
+      // Pacchetto BLE MIDI Standard per Program Change: [Header, Timestamp, Status/Channel, Program]
+      // Header BLE MIDI tipico: 0x80 0x80 (oppure timestamp bytes)
+      const packet = new Uint8Array([
+        0x80, // Header
+        0x80, // Timestamp + Status byte
+        0xC0 | getActiveChannel(), // Program Change sul canale selezionato
+        prog  // Numero Preset (0-127)
+      ]);
+      
+      await midiCharacteristic.writeValue(packet);
+      log(`Inviato Preset MIDI: ${presetNumber} (Program ${prog}) sul canale ${getActiveChannel() + 1}`);
+      return;
+    }
+
+  } catch (error) {
+    log("Errore durante l'invio del comando MIDI: " + error);
+  }
+}
+
+function getActiveChannel() {
+  const channelSelect = document.getElementById("midiChannel");
+  if (channelSelect) {
+    return parseInt(channelSelect.value, 10) || 0;
+  }
+  return 0;
 }
