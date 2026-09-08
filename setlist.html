@@ -78,8 +78,9 @@
     .code-line:focus { opacity:1; background:#1b222d; border-left:3px solid var(--blue); }
     .code-line.active { background:#284263; color:#ffffff; font-weight:bold; opacity:1; }
 
-    .scroll-btns { display:flex; flex-direction:column; gap:8px; width:45px; }
+    .scroll-btns { display:flex; flex-direction:column; gap:8px; width:62px; }
     .btn-scroll { flex:1; min-height:auto; font-size:20px; background:#252d3a; border-color:#3b475a; color:#7cb3ff; padding:0; display:flex; align-items:center; justify-content:center; }
+    .btn-side-play { min-height:58px; font-size:11px; background:#214e30; color:#8cffae; border-color:#28452f; padding:0 4px; margin-top:0; }
     
     .btn-fullscreen { background:#1f324d; border-color:#3d8bfd; color:#7cb3ff; min-height:36px; font-size:13px; width:auto; margin-top:0; }
     .btn-fullscreen-lyrics { background:#1c4d3b; border-color:#25d366; color:#a3ffd2; min-height:44px; font-size:15px; width:100%; margin-top:10px; }
@@ -312,6 +313,7 @@
           <div id="codeEditor" class="notes-editor"></div>
 
           <div class="scroll-btns">
+            <button id="btnSidePlay" class="btn-side-play" onclick="togglePlay()" aria-label="Riproduci testo">▶ PLAY</button>
             <button class="btn-scroll" onclick="scrollNotes('up')">▲</button>
             <button class="btn-scroll" onclick="scrollNotes('down')">▼</button>
           </div>
@@ -864,11 +866,23 @@
     }
   }
 
+  function updatePlayButtons() {
+    const label = isPlaying ? "❚❚ PAUSA" : "▶ PLAY";
+    const background = isPlaying ? "#8c6b21" : "#214e30";
+    ["btnPlay", "btnSidePlay"].forEach((id) => {
+      const button = document.getElementById(id);
+      if (button) {
+        button.textContent = label;
+        button.style.background = background;
+        button.setAttribute("aria-label", isPlaying ? "Metti in pausa il testo" : "Riproduci testo");
+      }
+    });
+  }
+
   function startPlaySync() {
     if (parsedLrc.length === 0) return;
     isPlaying = true;
-    document.getElementById("btnPlay").textContent = "❚❚ PAUSA";
-    document.getElementById("btnPlay").style.background = "#8c6b21";
+    updatePlayButtons();
 
     let currentSec = 0;
     if (ytPlayer && typeof ytPlayer.getCurrentTime === 'function') {
@@ -900,16 +914,14 @@
   function pausePlay() {
     isPlaying = false;
     clearInterval(timerInterval);
-    document.getElementById("btnPlay").textContent = "▶ PLAY";
-    document.getElementById("btnPlay").style.background = "#214e30";
+    updatePlayButtons();
   }
 
   function stopPlay() {
     isPlaying = false;
     clearInterval(timerInterval);
     window.currentLrcTime = 0;
-    document.getElementById("btnPlay").textContent = "▶ PLAY";
-    document.getElementById("btnPlay").style.background = "#214e30";
+    updatePlayButtons();
     
     if (ytPlayer && typeof ytPlayer.seekTo === 'function') {
       try { ytPlayer.seekTo(0); ytPlayer.pauseVideo(); } catch(e){}
