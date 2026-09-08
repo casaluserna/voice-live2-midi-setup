@@ -81,7 +81,7 @@
     .scroll-btns { display:flex; flex-direction:column; gap:8px; width:62px; }
     .btn-scroll { flex:1; min-height:auto; font-size:20px; background:#252d3a; border-color:#3b475a; color:#7cb3ff; padding:0; display:flex; align-items:center; justify-content:center; }
     .btn-side-play { min-height:58px; font-size:11px; background:#214e30; color:#8cffae; border-color:#28452f; padding:0 4px; margin-top:0; }
-    .column-resizer { flex:0 0 10px; border:0; border-radius:5px; background:#252d3a; cursor:col-resize; touch-action:none; }
+    .column-resizer { flex:0 0 14px; border:2px solid #596577; border-radius:7px; background:#303a4a; cursor:col-resize; touch-action:none; user-select:none; }
     .column-resizer:hover, .column-resizer.dragging { background:var(--blue); }
     
     .btn-fullscreen { background:#1f324d; border-color:#3d8bfd; color:#7cb3ff; min-height:36px; font-size:13px; width:auto; margin-top:0; }
@@ -1058,44 +1058,45 @@
       editor.scrollTop += scrollAmount;
     }
 
-    function setupColumnResizer() {
-      const wrapper = document.querySelector(".notes-wrapper");
-      const resizer = document.getElementById("columnResizer");
-      const display = document.getElementById("lrcDisplay");
-      const editor = document.getElementById("codeEditor");
-      if (!wrapper || !resizer || !display || !editor) return;
+  }
 
-      const setColumnWidths = (clientX) => {
-        const wrapperRect = wrapper.getBoundingClientRect();
-        const availableWidth = wrapperRect.width - resizer.offsetWidth - 20;
-        if (availableWidth <= 0) return;
+  function setupColumnResizer() {
+    const wrapper = document.querySelector(".notes-wrapper");
+    const resizer = document.getElementById("columnResizer");
+    const display = document.getElementById("lrcDisplay");
+    const editor = document.getElementById("codeEditor");
+    if (!wrapper || !resizer || !display || !editor) return;
 
-        const leftWidth = Math.min(availableWidth * 0.8, Math.max(availableWidth * 0.2, clientX - wrapperRect.left));
-        display.style.flex = `0 0 ${leftWidth}px`;
-        editor.style.flex = "1 1 0";
-      };
+    const setColumnWidths = (clientX) => {
+      const wrapperRect = wrapper.getBoundingClientRect();
+      const availableWidth = wrapperRect.width - resizer.offsetWidth - 20;
+      if (availableWidth <= 0) return;
 
-      resizer.addEventListener("pointerdown", (event) => {
-        if (window.matchMedia("(max-width: 600px)").matches) return;
-        isResizingColumns = true;
-        resizer.classList.add("dragging");
-        resizer.setPointerCapture(event.pointerId);
-      });
+      const leftWidth = Math.min(availableWidth * 0.8, Math.max(availableWidth * 0.2, clientX - wrapperRect.left));
+      display.style.flex = `0 0 ${leftWidth}px`;
+      editor.style.flex = "1 1 0";
+    };
 
-      resizer.addEventListener("pointermove", (event) => {
-        if (isResizingColumns) setColumnWidths(event.clientX);
-      });
+    resizer.addEventListener("pointerdown", (event) => {
+      if (window.matchMedia("(max-width: 600px)").matches) return;
+      isResizingColumns = true;
+      resizer.classList.add("dragging");
+      resizer.setPointerCapture(event.pointerId);
+    });
 
-      const stopResizing = (event) => {
-        if (!isResizingColumns) return;
-        isResizingColumns = false;
-        resizer.classList.remove("dragging");
-        if (resizer.hasPointerCapture(event.pointerId)) resizer.releasePointerCapture(event.pointerId);
-      };
+    resizer.addEventListener("pointermove", (event) => {
+      if (isResizingColumns) setColumnWidths(event.clientX);
+    });
 
-      resizer.addEventListener("pointerup", stopResizing);
-      resizer.addEventListener("pointercancel", stopResizing);
-    }
+    const stopResizing = (event) => {
+      if (!isResizingColumns) return;
+      isResizingColumns = false;
+      resizer.classList.remove("dragging");
+      if (resizer.hasPointerCapture(event.pointerId)) resizer.releasePointerCapture(event.pointerId);
+    };
+
+    resizer.addEventListener("pointerup", stopResizing);
+    resizer.addEventListener("pointercancel", stopResizing);
   }
 
   function onNotesInput() {
