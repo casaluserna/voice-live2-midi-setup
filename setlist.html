@@ -89,6 +89,7 @@
     .btn-rotate { background:#2c3a2f; border-color:#48634e; color:#95e0a1; min-height:36px; font-size:13px; width:auto; margin-top:0; }
     .btn-load-lrc { background:#332940; border-color:#5c4775; color:#d8b4fe; min-height:36px; font-size:13px; width:auto; margin-top:0; }
     .btn-save-notes { background:#1e3a5f; color:#93c5fd; border-color:#2b4c7e; min-height:44px; font-size:14px; margin-top:8px; display:none; }
+    .btn-undo-notes { background:#4a3520; color:#ffd28a; border-color:#76572d; min-height:44px; font-size:14px; margin-top:8px; display:none; }
 
     /* Schermo Intero */
     .fullscreen-mode #notesContainer {
@@ -330,6 +331,7 @@
         </div>
 
         <button id="btnSaveLiveNotes" class="btn-save-notes" onclick="saveLiveNotes()">💾 Salva Codice LRC / Note Modificate</button>
+        <button id="btnUndoLiveNotes" class="btn-undo-notes" onclick="undoLiveNotes()">↶ Annulla Modifiche LRC</button>
         <button id="btnFullscreenLyrics" class="btn-fullscreen-lyrics" onclick="toggleLyricsFullscreen()">🖥️ Testo a Schermo Intero</button>
       </div>
     </div>
@@ -509,9 +511,6 @@
     const reader = new FileReader();
     reader.onload = function(e) {
       const content = e.target.result;
-      if (activeSongIndex !== null) {
-        songs[activeSongIndex].notes = content;
-      }
       document.getElementById("timeOffsetSelect").value = "0";
       parsedLrc = parseLRC(content);
       renderLrcDisplay();
@@ -1103,6 +1102,7 @@
 
   function onNotesInput() {
     document.getElementById("btnSaveLiveNotes").style.display = "block";
+    document.getElementById("btnUndoLiveNotes").style.display = "block";
     const rawContent = getRawContentFromEditor();
     parsedLrc = parseLRC(rawContent);
     renderLrcDisplay();
@@ -1119,7 +1119,24 @@
 
     parsedLrc = parseLRC(newNotes);
     document.getElementById("btnSaveLiveNotes").style.display = "none";
+    document.getElementById("btnUndoLiveNotes").style.display = "none";
     log(`Note e timing aggiornati per: ${songs[activeSongIndex].title}`);
+  }
+
+  function undoLiveNotes() {
+    if (activeSongIndex === null) return;
+
+    const savedNotes = songs[activeSongIndex].notes || "";
+    parsedLrc = parseLRC(savedNotes);
+    renderLrcDisplay();
+    renderCodeEditor(savedNotes);
+    document.getElementById("btnSaveLiveNotes").style.display = "none";
+    document.getElementById("btnUndoLiveNotes").style.display = "none";
+
+    if (isPlaying) {
+      updateLrcHighlight(window.currentLrcTime || 0);
+    }
+    log(`Modifiche LRC annullate per: ${songs[activeSongIndex].title}`);
   }
 
   function prevSong() {
