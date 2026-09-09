@@ -950,31 +950,33 @@
   }
 
   function pausePlay() {
-    if (ytPlayer && typeof ytPlayer.getCurrentTime === 'function') {
-      try {
-        window.currentLrcTime = ytPlayer.getCurrentTime();
-        updatePlaybackTimer(window.currentLrcTime);
-      } catch(e){}
-    }
+    capturePlaybackPosition();
     isPlaying = false;
     clearInterval(timerInterval);
     updatePlayButtons();
+    updateLrcHighlight(window.currentLrcTime || 0);
   }
 
   function stopPlay() {
+    capturePlaybackPosition();
     isPlaying = false;
     clearInterval(timerInterval);
-    window.currentLrcTime = 0;
-    updatePlaybackTimer(0);
     updatePlayButtons();
     
-    if (ytPlayer && typeof ytPlayer.seekTo === 'function') {
-      try { ytPlayer.seekTo(0); ytPlayer.pauseVideo(); } catch(e){}
+    if (ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
+      try { ytPlayer.pauseVideo(); } catch(e){}
     }
 
-    document.querySelectorAll('.lrc-line, .code-line').forEach(el => el.classList.remove('active'));
-    document.getElementById("lrcDisplay").scrollTop = 0;
-    document.getElementById("codeEditor").scrollTop = 0;
+    updateLrcHighlight(window.currentLrcTime || 0);
+  }
+
+  function capturePlaybackPosition() {
+    if (ytPlayer && typeof ytPlayer.getCurrentTime === 'function') {
+      try {
+        window.currentLrcTime = ytPlayer.getCurrentTime();
+      } catch(e){}
+    }
+    updatePlaybackTimer(window.currentLrcTime || 0);
   }
 
   function updateLrcHighlight(currentTime) {
