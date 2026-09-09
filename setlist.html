@@ -392,6 +392,7 @@
   let timerInterval = null;
   let ytPlayer = null;
   let isResizingColumns = false;
+  let isEditingLrc = false;
 
   const lrcAdvanceSeconds = 0;
 
@@ -954,7 +955,7 @@
     isPlaying = false;
     clearInterval(timerInterval);
     updatePlayButtons();
-    updateLrcHighlight(window.currentLrcTime || 0);
+    updateLrcHighlight(window.currentLrcTime || 0, false);
   }
 
   function stopPlay() {
@@ -967,7 +968,7 @@
       try { ytPlayer.pauseVideo(); } catch(e){}
     }
 
-    updateLrcHighlight(window.currentLrcTime || 0);
+    updateLrcHighlight(window.currentLrcTime || 0, false);
   }
 
   function capturePlaybackPosition() {
@@ -979,7 +980,7 @@
     updatePlaybackTimer(window.currentLrcTime || 0);
   }
 
-  function updateLrcHighlight(currentTime) {
+  function updateLrcHighlight(currentTime, shouldScroll = !isEditingLrc) {
     let activeIndex = -1;
     const effectiveTime = currentTime + lrcAdvanceSeconds;
 
@@ -1002,12 +1003,16 @@
 
       if (activeLrc) {
         activeLrc.classList.add('active');
-        scrollLyricLineIntoContainer(activeLrc, document.getElementById("lrcDisplay"));
+        if (shouldScroll) {
+          scrollLyricLineIntoContainer(activeLrc, document.getElementById("lrcDisplay"));
+        }
       }
 
       if (activeCode) {
         activeCode.classList.add('active');
-        scrollLyricLineIntoContainer(activeCode, document.getElementById("codeEditor"));
+        if (shouldScroll) {
+          scrollLyricLineIntoContainer(activeCode, document.getElementById("codeEditor"));
+        }
       }
     }
   }
@@ -1153,14 +1158,13 @@
   }
 
   function onNotesInput() {
+    isEditingLrc = true;
     document.getElementById("btnSaveLiveNotes").style.display = "block";
     document.getElementById("btnUndoLiveNotes").style.display = "block";
     const rawContent = getRawContentFromEditor();
     parsedLrc = parseLRC(rawContent);
     renderLrcDisplay();
-    if (isPlaying) {
-      updateLrcHighlight(window.currentLrcTime || 0);
-    }
+    updateLrcHighlight(window.currentLrcTime || 0, false);
   }
 
   function saveLiveNotes() {
@@ -1172,6 +1176,10 @@
     parsedLrc = parseLRC(newNotes);
     document.getElementById("btnSaveLiveNotes").style.display = "none";
     document.getElementById("btnUndoLiveNotes").style.display = "none";
+    isEditingLrc = false;
+    renderLrcDisplay();
+    renderCodeEditor(newNotes);
+    updateLrcHighlight(window.currentLrcTime || 0, true);
     log(`Note e timing aggiornati per: ${songs[activeSongIndex].title}`);
   }
 
@@ -1184,10 +1192,9 @@
     renderCodeEditor(savedNotes);
     document.getElementById("btnSaveLiveNotes").style.display = "none";
     document.getElementById("btnUndoLiveNotes").style.display = "none";
+    isEditingLrc = false;
 
-    if (isPlaying) {
-      updateLrcHighlight(window.currentLrcTime || 0);
-    }
+    updateLrcHighlight(window.currentLrcTime || 0, true);
     log(`Modifiche LRC annullate per: ${songs[activeSongIndex].title}`);
   }
 
