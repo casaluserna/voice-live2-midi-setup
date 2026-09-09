@@ -68,7 +68,7 @@
     .notes-wrapper { display:flex; gap:10px; align-items:stretch; height:60vh; min-height:380px; }
     
     .lrc-display { background:#090b0e; border:1px solid var(--border); border-radius:8px; padding:14px; font-size:16px; color:#e2e8f0; height:100%; overflow-y:auto; flex:1; box-sizing:border-box; scroll-behavior:smooth; }
-    .lrc-line { padding:6px 8px; border-radius:6px; transition:all 0.2s ease; margin-bottom:4px; opacity:0.6; }
+    .lrc-line { padding:6px 8px; border-radius:6px; transition:color 0.2s ease, opacity 0.2s ease; margin-bottom:4px; opacity:0.6; }
     .lrc-line.clickable { cursor:pointer; }
     .lrc-line.clickable:hover { background:#1e293b; }
     .lrc-line.active { background:#284263; color:#ffffff; font-weight:bold; opacity:1; transform:scale(1.01); }
@@ -387,7 +387,7 @@
   let ytPlayer = null;
   let isResizingColumns = false;
 
-  const lrcAdvanceSeconds = 1.0;
+  const lrcAdvanceSeconds = 0;
 
   window.addEventListener("load", () => {
     loadSongsFromStorage();
@@ -959,16 +959,18 @@
     if (activeIndex !== -1) {
       const lrcLines = document.querySelectorAll('.lrc-line');
       const activeLrc = document.getElementById(`lrc-line-${activeIndex}`);
-      if (activeLrc && !activeLrc.classList.contains('active')) {
-        lrcLines.forEach(el => el.classList.remove('active'));
+      const codeLines = document.querySelectorAll('.code-line');
+      const activeCode = document.getElementById(`code-line-${activeIndex}`);
+
+      lrcLines.forEach(el => el.classList.remove('active'));
+      codeLines.forEach(el => el.classList.remove('active'));
+
+      if (activeLrc) {
         activeLrc.classList.add('active');
         activeLrc.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
 
-      const codeLines = document.querySelectorAll('.code-line');
-      const activeCode = document.getElementById(`code-line-${activeIndex}`);
-      if (activeCode && !activeCode.classList.contains('active')) {
-        codeLines.forEach(el => el.classList.remove('active'));
+      if (activeCode) {
         activeCode.classList.add('active');
         activeCode.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
