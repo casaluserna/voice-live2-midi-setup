@@ -776,10 +776,17 @@
     lines.forEach((lineText, idx) => {
       const div = document.createElement("div");
       div.className = "code-line";
-      div.id = `code-line-${idx}`;
       div.contentEditable = "true";
       div.textContent = lineText || "";
       div.oninput = () => onNotesInput();
+
+      if (lineText.trim() !== "") {
+        const lyricIndex = parsedLrc.findIndex(item => item.id === idx);
+        if (lyricIndex !== -1) {
+          div.id = `code-line-${lyricIndex}`;
+        }
+      }
+
       editor.appendChild(div);
     });
   }
