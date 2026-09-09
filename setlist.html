@@ -110,6 +110,7 @@
     .fullscreen-mode .notes-wrapper {
       height: 100%;
       min-height: 0;
+      display: block;
     }
 
     .fullscreen-mode .notes-editor {
@@ -180,11 +181,15 @@
       font-size: 26px;
       overflow-y: auto;
       padding-top: 24px;
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
     }
 
     .fullscreen-mode .lrc-line {
       text-align: center;
       width: 100%;
+      max-width: 100%;
     }
 
     .fullscreen-mode .notes-controls {
