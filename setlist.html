@@ -174,9 +174,11 @@
       text-align: center;
       display: flex;
       flex-direction: column;
-      justify-content: center;
+      justify-content: flex-start;
       align-items: center;
       font-size: 26px;
+      overflow-y: auto;
+      padding-top: 24px;
     }
 
     .fullscreen-mode .lrc-line {
@@ -742,6 +744,7 @@
   function renderLrcDisplay() {
     const display = document.getElementById("lrcDisplay");
     display.innerHTML = "";
+    display.scrollTop = 0;
 
     if (parsedLrc.length === 0) {
       display.innerHTML = '<div style="color:var(--dim);">Nessun testo presente.</div>';
@@ -766,6 +769,7 @@
   function renderCodeEditor(rawText) {
     const editor = document.getElementById("codeEditor");
     editor.innerHTML = "";
+    editor.scrollTop = 0;
 
     const lines = rawText ? rawText.split('\n') : [];
     if (lines.length === 0) {
@@ -962,14 +966,14 @@
       }
     }
 
-    if (activeIndex !== -1) {
-      const lrcLines = document.querySelectorAll('.lrc-line');
-      const activeLrc = document.getElementById(`lrc-line-${activeIndex}`);
-      const codeLines = document.querySelectorAll('.code-line');
-      const activeCode = document.getElementById(`code-line-${activeIndex}`);
+    const lrcLines = document.querySelectorAll('.lrc-line');
+    const codeLines = document.querySelectorAll('.code-line');
+    lrcLines.forEach(el => el.classList.remove('active'));
+    codeLines.forEach(el => el.classList.remove('active'));
 
-      lrcLines.forEach(el => el.classList.remove('active'));
-      codeLines.forEach(el => el.classList.remove('active'));
+    if (activeIndex !== -1 && parsedLrc[activeIndex].time !== null) {
+      const activeLrc = document.getElementById(`lrc-line-${activeIndex}`);
+      const activeCode = document.getElementById(`code-line-${activeIndex}`);
 
       if (activeLrc) {
         activeLrc.classList.add('active');
