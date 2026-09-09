@@ -973,13 +973,32 @@
 
       if (activeLrc) {
         activeLrc.classList.add('active');
-        activeLrc.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        scrollLyricLineIntoContainer(activeLrc, document.getElementById("lrcDisplay"));
       }
 
       if (activeCode) {
         activeCode.classList.add('active');
-        activeCode.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        scrollLyricLineIntoContainer(activeCode, document.getElementById("codeEditor"));
       }
+    }
+  }
+
+  function scrollLyricLineIntoContainer(line, container) {
+    if (!line || !container) return;
+
+    const lineTop = line.offsetTop;
+    const lineBottom = lineTop + line.offsetHeight;
+    const visibleTop = container.scrollTop;
+    const visibleBottom = visibleTop + container.clientHeight;
+    const padding = Math.max(20, container.clientHeight * 0.35);
+
+    if (lineTop < visibleTop + padding) {
+      container.scrollTo({ top: Math.max(0, lineTop - padding), behavior: "smooth" });
+    } else if (lineBottom > visibleBottom - padding) {
+      container.scrollTo({
+        top: Math.min(container.scrollHeight - container.clientHeight, lineBottom - container.clientHeight + padding),
+        behavior: "smooth"
+      });
     }
   }
 
