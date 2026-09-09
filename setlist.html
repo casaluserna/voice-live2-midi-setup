@@ -1013,29 +1013,26 @@
       if (activeLrc) {
         activeLrc.classList.add('active');
         if (shouldScroll) {
-          scrollLyricLineIntoContainer(activeLrc, document.getElementById("lrcDisplay"), true);
+          scrollLyricLineIntoContainer(activeLrc, document.getElementById("lrcDisplay"));
         }
       }
 
       if (activeCode) {
         activeCode.classList.add('active');
         if (shouldScroll) {
-          scrollLyricLineIntoContainer(activeCode, document.getElementById("codeEditor"), true);
+          scrollLyricLineIntoContainer(activeCode, document.getElementById("codeEditor"));
         }
       }
     }
   }
 
-  function scrollLyricLineIntoContainer(line, container, moveFullscreenUp = false) {
+  function scrollLyricLineIntoContainer(line, container) {
     if (!line || !container) return;
 
     const lineRect = line.getBoundingClientRect();
     const containerRect = container.getBoundingClientRect();
     const lineCenter = lineRect.top - containerRect.top + container.scrollTop + (lineRect.height / 2);
-    const fullscreenOffset = moveFullscreenUp && document.body.classList.contains("fullscreen-mode")
-      ? Math.max(0, line.offsetHeight * 2)
-      : 0;
-    const targetTop = lineCenter - (container.clientHeight / 2) - fullscreenOffset;
+    const targetTop = lineCenter - (container.clientHeight / 2);
     const maxScrollTop = Math.max(0, container.scrollHeight - container.clientHeight);
     const clampedTop = Math.max(0, Math.min(maxScrollTop, targetTop));
 
