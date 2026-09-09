@@ -1032,7 +1032,10 @@
     const lineRect = line.getBoundingClientRect();
     const containerRect = container.getBoundingClientRect();
     const lineCenter = lineRect.top - containerRect.top + container.scrollTop + (lineRect.height / 2);
-    const targetTop = lineCenter - (container.clientHeight / 2);
+    const fullscreenOffset = document.body.classList.contains("fullscreen-mode")
+      ? line.offsetHeight * 2
+      : 0;
+    const targetTop = lineCenter - (container.clientHeight / 2) - fullscreenOffset;
     const maxScrollTop = Math.max(0, container.scrollHeight - container.clientHeight);
     const clampedTop = Math.max(0, Math.min(maxScrollTop, targetTop));
 
