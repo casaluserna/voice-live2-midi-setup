@@ -1031,11 +1031,25 @@
 
     const lineRect = line.getBoundingClientRect();
     const containerRect = container.getBoundingClientRect();
-    const lineCenter = lineRect.top - containerRect.top + container.scrollTop + (lineRect.height / 2);
-    const fullscreenOffset = document.body.classList.contains("fullscreen-mode")
-      ? line.offsetHeight * 2
-      : 0;
-    const targetTop = lineCenter - (container.clientHeight / 2) - fullscreenOffset;
+    const lineTop = lineRect.top - containerRect.top;
+    const isFullscreen = document.body.classList.contains("fullscreen-mode");
+
+    if (isFullscreen) {
+      const triggerPosition = container.clientHeight * 0.45;
+      const targetPosition = container.clientHeight * 0.32;
+      if (lineTop >= triggerPosition || lineTop < 0) {
+        const targetTop = container.scrollTop + lineTop - targetPosition;
+        const maxScrollTop = Math.max(0, container.scrollHeight - container.clientHeight);
+        const clampedTop = Math.max(0, Math.min(maxScrollTop, targetTop));
+        if (Math.abs(container.scrollTop - clampedTop) > 2) {
+          container.scrollTo({ top: clampedTop, behavior: "smooth" });
+        }
+      }
+      return;
+    }
+
+    const lineCenter = lineTop + container.scrollTop + (lineRect.height / 2);
+    const targetTop = lineCenter - (container.clientHeight / 2);
     const maxScrollTop = Math.max(0, container.scrollHeight - container.clientHeight);
     const clampedTop = Math.max(0, Math.min(maxScrollTop, targetTop));
 
