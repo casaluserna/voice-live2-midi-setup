@@ -791,6 +791,10 @@
         const lyricIndex = parsedLrc.findIndex(item => item.id === idx);
         if (lyricIndex !== -1) {
           div.id = `code-line-${lyricIndex}`;
+          if (parsedLrc[lyricIndex].time !== null) {
+            div.classList.add("clickable");
+            div.onclick = () => jumpToLrcTime(parsedLrc[lyricIndex].time);
+          }
         }
       }
 
@@ -1164,9 +1168,15 @@
     isEditingLrc = true;
     document.getElementById("btnSaveLiveNotes").style.display = "block";
     document.getElementById("btnUndoLiveNotes").style.display = "block";
+    const lrcDisplay = document.getElementById("lrcDisplay");
+    const codeEditor = document.getElementById("codeEditor");
+    const lrcScrollTop = lrcDisplay.scrollTop;
+    const codeScrollTop = codeEditor.scrollTop;
     const rawContent = getRawContentFromEditor();
     parsedLrc = parseLRC(rawContent);
     renderLrcDisplay();
+    lrcDisplay.scrollTop = lrcScrollTop;
+    codeEditor.scrollTop = codeScrollTop;
     updateLrcHighlight(window.currentLrcTime || 0, false);
   }
 
