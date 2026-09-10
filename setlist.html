@@ -314,14 +314,15 @@
   // Sostituisci questo blocco con le tue chiavi personali di Firebase
   // ==========================================
   const firebaseConfig = {
-    apiKey: "INSERISCI_LA_TUA_API_KEY",
-    authDomain: "TUO_PROGETTO.firebaseapp.com",
-    projectId: "TUO_PROGETTO_ID",
-    storageBucket: "TUO_PROGETTO.appspot.com",
-    messagingSenderId: "TUO_SENDER_ID",
-    appId: "TUO_APP_ID"
-  };
-
+  apiKey: "AIzaSyBVRtflltd9by74SWaSiC4OjTeojurAs4M",
+  authDomain: "voicelive2.firebaseapp.com",
+  projectId: "voicelive2",
+  storageBucket: "voicelive2.firebasestorage.app",
+  messagingSenderId: "196560614823",
+  appId: "1:196560614823:web:2e2465ec3c095785653282"
+};
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
   let db = null;
   let cloudDocRef = null;
   let cloudSaveTimer = null;
