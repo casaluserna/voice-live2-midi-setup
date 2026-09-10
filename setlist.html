@@ -4,6 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Scaletta & Testi - VoiceLive 2</title>
+
+  <!-- Firebase SDK (Compatibile script tag) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
   <style>
     :root { 
       --bg:#101216; 
@@ -14,6 +19,7 @@
       --green:#25d366; 
       --red:#ff4d4d; 
       --blue:#3d8bfd;
+      --orange:#f59e0b;
       --yt-red:#ff0000;
       --border:#30353f; 
     }
@@ -23,7 +29,13 @@
     
     .container { max-width: 900px; margin: auto; transition: max-width 0.3s ease; }
     
-    a.back { color:var(--blue); text-decoration:none; display:inline-block; margin-bottom:15px; font-size:14px; }
+    .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    a.back { color:var(--blue); text-decoration:none; font-size:14px; }
+    .cloud-badge { font-size:11px; font-weight:bold; padding:4px 8px; border-radius:6px; background:#20242c; border:1px solid var(--border); color:var(--dim); }
+    .cloud-badge.syncing { background:#452205; color:var(--orange); border-color:#78350f; }
+    .cloud-badge.synced { background:#143823; color:#86efac; border-color:#166534; }
+    .cloud-badge.error { background:#451212; color:#fca5a5; border-color:#991b1b; }
+
     h1 { font-size:22px; margin:0 0 15px; }
     .section { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; margin-bottom:15px; }
     label { display:block; margin-bottom:6px; color:var(--dim); font-size:13px; }
@@ -107,123 +119,29 @@
       flex-direction: column;
     }
 
-    .fullscreen-mode .notes-wrapper {
-      height: 100%;
-      min-height: 0;
-      display: block;
-    }
+    .fullscreen-mode .notes-wrapper { height: 100%; min-height: 0; display: block; }
+    .fullscreen-mode .notes-editor, .fullscreen-mode .column-resizer { display: none !important; }
+    .btn-close-fullscreen { display: none; background: #512222; color: #ff4d4d; border-color: #632828; min-height: 36px; font-size: 13px; width: auto; margin-top: 0; }
+    .fullscreen-mode .btn-close-fullscreen { display: block; }
 
-    .fullscreen-mode .notes-editor {
-      display: none !important;
-    }
+    :fullscreen body, :-webkit-full-screen body { padding: 10px !important; overflow-x: hidden; }
+    :fullscreen .container, :-webkit-full-screen .container { max-width: 100% !important; width: 100% !important; margin: 0 !important; }
 
-    .fullscreen-mode .column-resizer {
-      display: none;
-    }
+    .fullscreen-mode .btn-ytmusic, .fullscreen-mode .yt-embed-box label, .fullscreen-mode .yt-embed-box > div { display: none !important; }
+    .fullscreen-mode .player-container { margin-bottom: 5px; }
+    .fullscreen-mode .yt-embed-box { margin-top: 0; padding: 0; border: none; background: transparent; }
+    .fullscreen-mode .yt-player-frame { height: 50px !important; max-width: 200px; margin: 0 auto; }
+    .fullscreen-mode .lrc-display { text-align: center; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; font-size: 26px; overflow-y: auto; padding-top: 24px; width: 100%; height: 100%; box-sizing: border-box; }
+    .fullscreen-mode .lrc-line { text-align: center; width: 100%; max-width: 100%; }
+    .fullscreen-mode .notes-controls { justify-content: center; gap: 12px; }
 
-    .btn-close-fullscreen {
-      display: none;
-      background: #512222;
-      color: #ff4d4d;
-      border-color: #632828;
-      min-height: 36px;
-      font-size: 13px;
-      width: auto;
-      margin-top: 0;
-    }
-
-    .fullscreen-mode .btn-close-fullscreen {
-      display: block;
-    }
-
-    :fullscreen body,
-    :-webkit-full-screen body {
-      padding: 10px !important;
-      overflow-x: hidden;
-    }
-
-    :fullscreen .container,
-    :-webkit-full-screen .container {
-      max-width: 100% !important;
-      width: 100% !important;
-      margin: 0 !important;
-    }
-
-    .fullscreen-mode .btn-ytmusic,
-    .fullscreen-mode .yt-embed-box label,
-    .fullscreen-mode .yt-embed-box > div {
-      display: none !important;
-    }
-
-    .fullscreen-mode .player-container {
-      margin-bottom: 5px;
-    }
-
-    .fullscreen-mode .yt-embed-box {
-      margin-top: 0;
-      padding: 0;
-      border: none;
-      background: transparent;
-    }
-
-    .fullscreen-mode .yt-player-frame {
-      height: 50px !important;
-      max-width: 200px;
-      margin: 0 auto;
-    }
-
-    .fullscreen-mode .lrc-display {
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-start;
-      align-items: center;
-      font-size: 26px;
-      overflow-y: auto;
-      padding-top: 24px;
-      width: 100%;
-      height: 100%;
-      box-sizing: border-box;
-    }
-
-    .fullscreen-mode .lrc-line {
-      text-align: center;
-      width: 100%;
-      max-width: 100%;
-    }
-
-    .fullscreen-mode .notes-controls {
-      justify-content: center;
-      gap: 12px;
-    }
-
-    body.rotate-90 {
-      transform: rotate(90deg);
-      transform-origin: bottom left;
-      position: absolute;
-      top: -100vw;
-      left: 0;
-      width: 100vh !important;
-      height: 100vw !important;
-      overflow-x: hidden;
-    }
+    body.rotate-90 { transform: rotate(90deg); transform-origin: bottom left; position: absolute; top: -100vw; left: 0; width: 100vh !important; height: 100vw !important; overflow-x: hidden; }
 
     @media (max-width: 600px) {
-      .notes-wrapper:not(.fullscreen-mode .notes-wrapper) {
-        flex-direction: column;
-        height: auto;
-      }
-      .lrc-display, .notes-editor {
-        height: 250px;
-      }
-      .column-resizer {
-        display:none;
-      }
-      .scroll-btns {
-        flex-direction: row;
-        width: 100%;
-        height: 40px;
-      }
+      .notes-wrapper:not(.fullscreen-mode .notes-wrapper) { flex-direction: column; height: auto; }
+      .lrc-display, .notes-editor { height: 250px; }
+      .column-resizer { display:none; }
+      .scroll-btns { flex-direction: row; width: 100%; height: 40px; }
     }
 
     .log { height:120px; overflow:auto; background:#090b0e; border-radius:10px; padding:10px; font-family:monospace; font-size:12px; color:#bfc5cf; white-space:pre-wrap; }
@@ -232,7 +150,11 @@
 <body>
 
 <div class="container">
-  <a href="index.html" class="back">← Menu Principale</a>
+  <div class="header-row">
+    <a href="index.html" class="back">← Menu Principale</a>
+    <span id="cloudStatus" class="cloud-badge">CLOUD: INIT</span>
+  </div>
+  
   <h1>Scaletta, Preset & Testi</h1>
 
   <div class="section" style="display:flex; gap:10px; flex-wrap:wrap;">
@@ -387,6 +309,69 @@
 <script src="midi-core.js"></script>
 <script src="https://www.youtube.com/iframe_api"></script>
 <script>
+  // ==========================================
+  // CONFIGURAZIONE FIREBASE CLOUD
+  // Sostituisci questo blocco con le tue chiavi personali di Firebase
+  // ==========================================
+  const firebaseConfig = {
+    apiKey: "INSERISCI_LA_TUA_API_KEY",
+    authDomain: "TUO_PROGETTO.firebaseapp.com",
+    projectId: "TUO_PROGETTO_ID",
+    storageBucket: "TUO_PROGETTO.appspot.com",
+    messagingSenderId: "TUO_SENDER_ID",
+    appId: "TUO_APP_ID"
+  };
+
+  let db = null;
+  let cloudDocRef = null;
+  let cloudSaveTimer = null;
+
+  function initFirebase() {
+    if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "INSERISCI_LA_TUA_API_KEY") {
+      try {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+        cloudDocRef = db.collection("setlists").doc("live_voicelive_session");
+        setCloudStatus("CLOUD: ONLINE", "synced");
+      } catch (err) {
+        console.error("Errore inizializzazione Firebase:", err);
+        setCloudStatus("CLOUD: ERRORE INIT", "error");
+      }
+    } else {
+      setCloudStatus("CLOUD: CHIAVI MANCANTI", "");
+    }
+  }
+
+  function setCloudStatus(text, statusClass) {
+    const el = document.getElementById("cloudStatus");
+    if (el) {
+      el.textContent = text;
+      el.className = "cloud-badge " + (statusClass || "");
+    }
+  }
+
+  function triggerCloudAutoSave() {
+    if (!cloudDocRef) return;
+    setCloudStatus("CLOUD: SALVATAGGIO...", "syncing");
+
+    if (cloudSaveTimer) clearTimeout(cloudSaveTimer);
+    cloudSaveTimer = setTimeout(async () => {
+      try {
+        await cloudDocRef.set({
+          songs: songs,
+          lastUpdated: new Date().toISOString()
+        }, { merge: true });
+        setCloudStatus("CLOUD: SINCRONIZZATO", "synced");
+      } catch (err) {
+        console.error("Errore salvataggio Cloud:", err);
+        setCloudStatus("CLOUD: ERRORE RETE", "error");
+      }
+    }, 1500);
+  }
+
+  // ==========================================
+  // STATO APPLICAZIONE & VARIABILI
+  // ==========================================
   let songs = [];
   let editingIndex = null;
   let activeSongIndex = null;
@@ -402,6 +387,7 @@
   const lrcAdvanceSeconds = 0;
 
   window.addEventListener("load", () => {
+    initFirebase();
     loadSongsFromStorage();
     renderSongsUI();
     setupColumnResizer();
@@ -431,6 +417,7 @@
   }
 
   function loadSongsFromStorage() {
+    // 1. Carica istantaneamente da localStorage
     const saved = localStorage.getItem("voicelive_setlist");
     if (saved) {
       try { songs = JSON.parse(saved); } catch (e) { songs = []; }
@@ -439,16 +426,35 @@
         { 
           title: "Hotel California - Eagles", 
           preset: 42, 
-          ytUrl: "",
+          ytUrl: "", 
           notes: "[00:02.00]Intro chitarra...\n[00:08.50]On a dark desert highway\n[00:12.00]Cool wind in my hair\n[00:16.00]Warm smell of colitas\n[00:19.50]Rising up through the air" 
         }
       ];
       saveSongsToStorage();
     }
+
+    // 2. Verifica se esiste una versione più recente sul cloud
+    if (cloudDocRef) {
+      cloudDocRef.get().then((doc) => {
+        if (doc.exists && Array.isArray(doc.data().songs)) {
+          songs = doc.data().songs;
+          localStorage.setItem("voicelive_setlist", JSON.stringify(songs));
+          renderSongsUI();
+          if (activeSongIndex !== null && songs[activeSongIndex]) {
+            onSongChange(activeSongIndex);
+          }
+          setCloudStatus("CLOUD: SINCRONIZZATO", "synced");
+          log("Scaletta aggiornata dal Cloud Firestore.");
+        }
+      }).catch((err) => {
+        console.warn("Impossibile contattare il cloud, uso locale:", err);
+      });
+    }
   }
 
   function saveSongsToStorage() {
     localStorage.setItem("voicelive_setlist", JSON.stringify(songs));
+    triggerCloudAutoSave();
   }
 
   function renderSongsUI() {
@@ -638,11 +644,8 @@
           return;
         }
       } catch (err) {
-        if (err.name !== 'AbortError') {
-          console.error(err);
-        } else {
-          return;
-        }
+        if (err.name !== 'AbortError') console.error(err);
+        else return;
       }
     }
 
@@ -743,6 +746,12 @@
     parsedLrc = parseLRC(newText);
     renderLrcDisplay();
     renderCodeEditor(newText);
+    
+    // Salva automaticamente lo shift
+    if (activeSongIndex !== null) {
+      songs[activeSongIndex].notes = newText;
+      saveSongsToStorage();
+    }
     
     document.getElementById("btnSaveLiveNotes").style.display = "block";
     document.getElementById("timeOffsetSelect").value = "0";
@@ -1141,7 +1150,6 @@
       container.scrollTop += scrollAmount;
       editor.scrollTop += scrollAmount;
     }
-
   }
 
   function setupColumnResizer() {
@@ -1192,11 +1200,18 @@
     const lrcScrollTop = lrcDisplay.scrollTop;
     const codeScrollTop = codeEditor.scrollTop;
     const rawContent = getRawContentFromEditor();
+    
     parsedLrc = parseLRC(rawContent);
     renderLrcDisplay();
     lrcDisplay.scrollTop = lrcScrollTop;
     codeEditor.scrollTop = codeScrollTop;
     updateLrcHighlight(window.currentLrcTime || 0, false);
+
+    // Auto-salvataggio trasparente in background durante la digitazione
+    if (activeSongIndex !== null) {
+      songs[activeSongIndex].notes = rawContent;
+      saveSongsToStorage();
+    }
   }
 
   function saveLiveNotes() {
@@ -1225,6 +1240,10 @@
     document.getElementById("btnSaveLiveNotes").style.display = "none";
     document.getElementById("btnUndoLiveNotes").style.display = "none";
     isEditingLrc = false;
+
+    // Ripristina anche nello storage
+    songs[activeSongIndex].notes = savedNotes;
+    saveSongsToStorage();
 
     updateLrcHighlight(window.currentLrcTime || 0, true);
     log(`Modifiche LRC annullate per: ${songs[activeSongIndex].title}`);
