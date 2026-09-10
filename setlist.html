@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Scaletta & Testi - VoiceLive 2</title>
 
-  <!-- Firebase SDK (Compatibile script tag) -->
+  <!-- Firebase SDK Compatibile per Browser -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
@@ -104,7 +104,7 @@
     .btn-save-notes { background:#1e3a5f; color:#93c5fd; border-color:#2b4c7e; min-height:44px; font-size:14px; margin-top:8px; display:none; }
     .btn-undo-notes { background:#4a3520; color:#ffd28a; border-color:#76572d; min-height:44px; font-size:14px; margin-top:8px; display:none; }
 
-    /* Schermo Intero */
+    /* Modalità Schermo Intero */
     .fullscreen-mode #notesContainer {
       position: fixed;
       top: 0;
@@ -213,7 +213,6 @@
           <button class="btn-load-lrc" onclick="document.getElementById('lrcFileInput').click()">📂 Carica .LRC</button>
           <input type="file" id="lrcFileInput" accept=".lrc,.txt" style="display:none;" onchange="handleLrcFileUpload(event)">
 
-          <!-- Selettore Scostamento Timing LRC -->
           <select id="timeOffsetSelect" class="font-select" style="background:#283545; border-color:#3d8bfd;" onchange="applyTimeOffset(this.value)">
             <option value="0" selected>Shift Timing: 0s</option>
             <option value="-5.0">-5.0s (Anticipa)</option>
@@ -311,35 +310,29 @@
 <script>
   // ==========================================
   // CONFIGURAZIONE FIREBASE CLOUD
-  // Sostituisci questo blocco con le tue chiavi personali di Firebase
   // ==========================================
   const firebaseConfig = {
-  apiKey: "AIzaSyBVRtflltd9by74SWaSiC4OjTeojurAs4M",
-  authDomain: "voicelive2.firebaseapp.com",
-  projectId: "voicelive2",
-  storageBucket: "voicelive2.firebasestorage.app",
-  messagingSenderId: "196560614823",
-  appId: "1:196560614823:web:2e2465ec3c095785653282"
-};
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+    apiKey: "AIzaSyBVRtflltd9by74SWaSiC4OjTeojurAs4M",
+    authDomain: "voicelive2.firebaseapp.com",
+    projectId: "voicelive2",
+    storageBucket: "voicelive2.firebasestorage.app",
+    messagingSenderId: "196560614823",
+    appId: "1:196560614823:web:2e2465ec3c095785653282"
+  };
+
   let db = null;
   let cloudDocRef = null;
   let cloudSaveTimer = null;
 
   function initFirebase() {
-    if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "INSERISCI_LA_TUA_API_KEY") {
-      try {
-        firebase.initializeApp(firebaseConfig);
-        db = firebase.firestore();
-        cloudDocRef = db.collection("setlists").doc("live_voicelive_session");
-        setCloudStatus("CLOUD: ONLINE", "synced");
-      } catch (err) {
-        console.error("Errore inizializzazione Firebase:", err);
-        setCloudStatus("CLOUD: ERRORE INIT", "error");
-      }
-    } else {
-      setCloudStatus("CLOUD: CHIAVI MANCANTI", "");
+    try {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+      cloudDocRef = db.collection("setlists").doc("live_voicelive_session");
+      setCloudStatus("CLOUD: ONLINE", "synced");
+    } catch (err) {
+      console.error("Errore inizializzazione Firebase:", err);
+      setCloudStatus("CLOUD: ERRORE INIT", "error");
     }
   }
 
@@ -418,7 +411,6 @@ const app = initializeApp(firebaseConfig);
   }
 
   function loadSongsFromStorage() {
-    // 1. Carica istantaneamente da localStorage
     const saved = localStorage.getItem("voicelive_setlist");
     if (saved) {
       try { songs = JSON.parse(saved); } catch (e) { songs = []; }
@@ -434,7 +426,6 @@ const app = initializeApp(firebaseConfig);
       saveSongsToStorage();
     }
 
-    // 2. Verifica se esiste una versione più recente sul cloud
     if (cloudDocRef) {
       cloudDocRef.get().then((doc) => {
         if (doc.exists && Array.isArray(doc.data().songs)) {
@@ -445,7 +436,7 @@ const app = initializeApp(firebaseConfig);
             onSongChange(activeSongIndex);
           }
           setCloudStatus("CLOUD: SINCRONIZZATO", "synced");
-          log("Scaletta aggiornata dal Cloud Firestore.");
+          log("Scaletta sincronizzata dal Cloud Firestore.");
         }
       }).catch((err) => {
         console.warn("Impossibile contattare il cloud, uso locale:", err);
@@ -748,7 +739,6 @@ const app = initializeApp(firebaseConfig);
     renderLrcDisplay();
     renderCodeEditor(newText);
     
-    // Salva automaticamente lo shift
     if (activeSongIndex !== null) {
       songs[activeSongIndex].notes = newText;
       saveSongsToStorage();
@@ -876,7 +866,7 @@ const app = initializeApp(firebaseConfig);
         ytPlayer = new YT.Player('ytIframePlayer', {
           events: { 'onStateChange': onPlayerStateChange }
         });
-      } catch(e) {}
+      } catch(e){}
       
       log("Video/Audio YouTube caricato nel brano.");
     } else {
@@ -1208,7 +1198,6 @@ const app = initializeApp(firebaseConfig);
     codeEditor.scrollTop = codeScrollTop;
     updateLrcHighlight(window.currentLrcTime || 0, false);
 
-    // Auto-salvataggio trasparente in background durante la digitazione
     if (activeSongIndex !== null) {
       songs[activeSongIndex].notes = rawContent;
       saveSongsToStorage();
@@ -1228,7 +1217,7 @@ const app = initializeApp(firebaseConfig);
     renderLrcDisplay();
     renderCodeEditor(newNotes);
     updateLrcHighlight(window.currentLrcTime || 0, true);
-    log(`Note e timing aggiornati per: ${songs[activeSongIndex].title}`);
+    log(`Note e timing salvati per: ${songs[activeSongIndex].title}`);
   }
 
   function undoLiveNotes() {
@@ -1242,7 +1231,6 @@ const app = initializeApp(firebaseConfig);
     document.getElementById("btnUndoLiveNotes").style.display = "none";
     isEditingLrc = false;
 
-    // Ripristina anche nello storage
     songs[activeSongIndex].notes = savedNotes;
     saveSongsToStorage();
 
