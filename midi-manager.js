@@ -7,15 +7,17 @@
 const MidiManager = {
   midiAccess: null,
   activeOutput: null,
-  midiChannel: 0, // 0 = Canale 1 (0xBn / 0xCn)
+  midiChannel: 0, // Canale 1 (0 = CH 1, 1 = CH 2, ecc.)
 
-  // Inizializza l'accesso Web MIDI
   async init(selectElementId = "midiOutputSelect", statusElementId = "midiStatus") {
     this.selectEl = document.getElementById(selectElementId);
     this.statusEl = document.getElementById(statusElementId);
 
     if (!navigator.requestMIDIAccess) {
-      this.updateStatus("Web MIDI non supportato su questo browser ❌", "error");
+      if (this.statusEl) {
+        this.statusEl.textContent = "Usa 'Web MIDI Browser' su iPad per il cavo USB ⚠️";
+        this.statusEl.style.color = "var(--orange)";
+      }
       return false;
     }
 
@@ -23,119 +25,104 @@ const MidiManager = {
       this.midiAccess = await navigator.requestMIDIAccess({ sysex: false });
       this.refreshPorts();
 
-      // Rilevamento a caldo se inserisci/stacchi cavo o dongle
-      this.midiAccess.onstatechange = (event) => {
-        console.log(`[MIDI] Porta cambiata: ${event.port.name} -> ${event.port.state}`);
-        this.refreshPorts();
-      };
+      this.midiAccess.onstatechange = () => this.refreshPorts();
 
       if (this.selectEl) {
         this.selectEl.addEventListener("change", (e) => this.onUserSelectPort(e.target.value));
       }
-
       return true;
     } catch (err) {
       console.error("[MIDI] Errore richiesta accesso:", err);
-      this.updateStatus("Accesso MIDI negato 🔒", "error");
+      if (this.statusEl) {
+        this.statusEl.textContent = "Accesso MIDI negato 🔒";
+        this.statusEl.style.color = "var(--red)";
+      }
       return false;
     }
   },
 
-  // Scansiona e aggiorna la lista dispositivi (USB o BLE)
   refreshPorts() {
     if (!this.midiAccess || !this.selectEl) return;
 
     this.selectEl.innerHTML = '<option value="">-- Seleziona Interfaccia MIDI --</option>';
-    const savedDeviceName = localStorage.getItem("vl2_preferred_midi_device");
+    const savedName = localStorage.getItem("vl2_preferred_device");
     let autoSelected = false;
 
     for (let output of this.midiAccess.outputs.values()) {
       const option = document.createElement("option");
       option.value = output.id;
 
-      // Etichetta leggibile per distinguere cavo da wireless
-      const nameLower = output.name.toLowerCase();
-      if (nameLower.includes("voicelive")) {
+      const lowerName = output.name.toLowerCase();
+      if (lowerName.includes("voicelive")) {
         option.textContent = `🔌 Cavo USB: ${output.name}`;
-      } else if (nameLower.includes("sk-7") || nameLower.includes("ble") || nameLower.includes("bluetooth")) {
+      } else if (lowerName.includes("sk-7") || lowerName.includes("ble") || lowerName.includes("bluetooth")) {
         option.textContent = `📶 Bluetooth: ${output.name}`;
       } else {
         option.textContent = `🎛️ ${output.name}`;
       }
 
-      // 1. Ripristina periferica precedentemente salvata
-      if (savedDeviceName && output.name === savedDeviceName) {
+      if (savedName && output.name === savedName) {
         option.selected = true;
         this.activeOutput = output;
         autoSelected = true;
-        this.updateStatus(`Connesso: ${output.name} 🟢`, "connected");
+        this.setStatus(`Connesso: ${output.name} 🟢`, "var(--green)");
       }
 
       this.selectEl.appendChild(option);
     }
 
-    // 2. Se non c'è una preferenza salvata ma c'è il cavo VoiceLive 2, aggancialo in automatico
+    // Se c'è il VoiceLive 2 via cavo collegato e nulla era memorizzato, selezionalo subito
     if (!autoSelected) {
       for (let output of this.midiAccess.outputs.values()) {
         if (output.name.toLowerCase().includes("voicelive")) {
           this.selectEl.value = output.id;
           this.activeOutput = output;
-          this.updateStatus(`Connesso: ${output.name} 🟢`, "connected");
-          localStorage.setItem("vl2_preferred_midi_device", output.name);
+          this.setStatus(`Connesso: ${output.name} 🟢`, "var(--green)");
+          localStorage.setItem("vl2_preferred_device", output.name);
           break;
         }
       }
     }
 
-    if (!this.activeOutput) {
-      this.updateStatus("Nessun dispositivo connesso 🔴", "disconnected");
+    if (!this.activeOutput && this.selectEl.options.length <= 1) {
+      this.setStatus("Nessun dispositivo MIDI rilevato 🔴", "var(--red)");
     }
   },
 
-  // Selezione manuale dall'interfaccia
   onUserSelectPort(portId) {
     if (!portId) {
       this.activeOutput = null;
-      localStorage.removeItem("vl2_preferred_midi_device");
-      this.updateStatus("Disconnesso 🔴", "disconnected");
+      localStorage.removeItem("vl2_preferred_device");
+      this.setStatus("Disconnesso 🔴", "var(--red)");
       return;
     }
 
     this.activeOutput = this.midiAccess.outputs.get(portId);
     if (this.activeOutput) {
-      localStorage.setItem("vl2_preferred_midi_device", this.activeOutput.name);
-      this.updateStatus(`Connesso: ${this.activeOutput.name} 🟢`, "connected");
+      localStorage.setItem("vl2_preferred_device", this.activeOutput.name);
+      this.setStatus(`Connesso: ${this.activeOutput.name} 🟢`, "var(--green)");
     }
   },
 
-  // Invia un cambio preset (Program Change) al VoiceLive 2
-  sendProgramChange(programNumber) {
+  sendProgramChange(presetNumber) {
     if (!this.activeOutput) {
-      console.warn("[MIDI] Nessun output attivo per il Program Change.");
+      console.warn("Nessun output MIDI attivo!");
       return;
     }
-    // Status byte 0xC0 + channel (0x0 = ch 1)
-    const status = 0xC0 | (this.midiChannel & 0x0F);
-    this.activeOutput.send([status, programNumber]);
-    console.log(`[MIDI] PC -> Preset ${programNumber}`);
+    const statusByte = 0xC0 | (this.midiChannel & 0x0F);
+    this.activeOutput.send([statusByte, presetNumber]);
   },
 
-  // Invia un Control Change (es. attivazione/disattivazione effetti)
   sendControlChange(ccNumber, value) {
-    if (!this.activeOutput) {
-      console.warn("[MIDI] Nessun output attivo per il Control Change.");
-      return;
-    }
-    // Status byte 0xB0 + channel (0x0 = ch 1)
-    const status = 0xB0 | (this.midiChannel & 0x0F);
-    this.activeOutput.send([status, ccNumber, value]);
-    console.log(`[MIDI] CC -> #${ccNumber} Val: ${value}`);
+    if (!this.activeOutput) return;
+    const statusByte = 0xB0 | (this.midiChannel & 0x0F);
+    this.activeOutput.send([statusByte, ccNumber, value]);
   },
 
-  updateStatus(msg, stateClass) {
+  setStatus(text, color) {
     if (this.statusEl) {
-      this.statusEl.textContent = msg;
-      this.statusEl.className = `midi-status ${stateClass}`;
+      this.statusEl.textContent = text;
+      this.statusEl.style.color = color;
     }
   }
 };
