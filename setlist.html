@@ -163,8 +163,11 @@
   </div>
 
   <div class="section">
-    <label>Connessione BLE SK-7 OUT</label>
-    <button id="btnOut" class="connect" onclick="connectOut()">CONNETTI SK-7 OUT</button>
+    <label for="midiOutputSelect"><strong>Interfaccia MIDI (Cavo USB / Bluetooth)</strong></label>
+    <select id="midiOutputSelect">
+      <option value="">Ricerca dispositivi...</option>
+    </select>
+    <div id="midiStatus" style="margin-top:8px; font-size:13px; color:var(--dim);">Inizializzazione...</div>
   </div>
 
   <div class="section">
@@ -307,6 +310,7 @@
 
 <script src="midi-core.js"></script>
 <script src="https://www.youtube.com/iframe_api"></script>
+<script src="midi-manager.js"></script>
 <script>
   // ==========================================
   // CONFIGURAZIONE FIREBASE CLOUD
@@ -385,11 +389,7 @@
     loadSongsFromStorage();
     renderSongsUI();
     setupColumnResizer();
-    
-    if (sessionStorage.getItem("sk7_connected") === "true") {
-      const btn = document.getElementById("btnOut");
-      btn.textContent = "PRONTO PER RICONNESSIONE";
-    }
+    MidiManager.init("midiOutputSelect", "midiStatus");
   });
 
   function connectOut() {
@@ -1079,7 +1079,7 @@
     const selectedSong = songs[activeSongIndex];
 
     if (selectedSong) {
-      sendPresetChange(selectedSong.preset);
+      MidiManager.sendProgramChange(selectedSong.preset - 1);
       log(`BRANO CARICATO: ${selectedSong.title}`);
 
       const queryGoogle = encodeURIComponent(`${selectedSong.title} lyrics testo`);
