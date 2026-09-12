@@ -367,6 +367,14 @@
     }, 1500);
   }
 
+  function log(msg) {
+    const logBox = document.getElementById("log");
+    if (logBox) {
+      const time = new Date().toLocaleTimeString();
+      logBox.innerHTML = `[${time}] ${msg}\n` + logBox.innerHTML;
+    }
+  }
+
   // ==========================================
   // STATO APPLICAZIONE & VARIABILI
   // ==========================================
@@ -384,64 +392,81 @@
 
   const lrcAdvanceSeconds = 0;
 
-  window.addEventListener("load", () => {
+  window.addEventListener("load", async () => {
     initFirebase();
-    loadSongsFromStorage();
-    renderSongsUI();
+    await loadSongsFromStorage();
     setupColumnResizer();
     MidiManager.init("midiOutputSelect", "midiStatus");
   });
 
-  function connectOut() {
-    const btn = document.getElementById("btnOut");
-    btn.textContent = "CONNESSIONE IN CORSO...";
+  async function loadSongsFromStorage() {
+    setCloudStatus("CLOUD: CONTROLLO...", "syncing");
 
-    connectOutputSK7((name) => {
-      if (name) {
-        btn.textContent = "CONNESSO: " + name;
-        btn.style.background = "#28452f";
-        sessionStorage.setItem("sk7_connected", "true");
-        log(`Connesso a: ${name}`);
-      } else {
-        btn.textContent = "CONNETTI SK-7 OUT";
-        btn.style.background = "#26364f";
-        sessionStorage.removeItem("sk7_connected");
-      }
-    });
-  }
-
-  function loadSongsFromStorage() {
-    const saved = localStorage.getItem("voicelive_setlist");
-    if (saved) {
-      try { songs = JSON.parse(saved); } catch (e) { songs = []; }
-    } else {
-      songs = [
-        { 
-          title: "Hotel California - Eagles", 
-          preset: 42, 
-          ytUrl: "", 
-          notes: "[00:02.00]Intro chitarra...\n[00:08.50]On a dark desert highway\n[00:12.00]Cool wind in my hair\n[00:16.00]Warm smell of colitas\n[00:19.50]Rising up through the air" 
-        }
-      ];
-      saveSongsToStorage();
-    }
-
+    // 1. Prova prima a recuperare dal Cloud Firestore
     if (cloudDocRef) {
-      cloudDocRef.get().then((doc) => {
-        if (doc.exists && Array.isArray(doc.data().songs)) {
+      try {
+        const doc = await cloudDocRef.get();
+        if (doc.exists && Array.isArray(doc.data().songs) && doc.data().songs.length > 0) {
           songs = doc.data().songs;
           localStorage.setItem("voicelive_setlist", JSON.stringify(songs));
           renderSongsUI();
-          if (activeSongIndex !== null && songs[activeSongIndex]) {
-            onSongChange(activeSongIndex);
-          }
           setCloudStatus("CLOUD: SINCRONIZZATO", "synced");
-          log("Scaletta sincronizzata dal Cloud Firestore.");
+          log(`Caricati ${songs.length} brani dal Cloud.`);
+          return;
+        } else {
+          log("Nessuna scaletta sul Cloud. Controllo memoria locale...");
         }
-      }).catch((err) => {
-        console.warn("Impossibile contattare il cloud, uso locale:", err);
-      });
+      } catch (err) {
+        console.warn("Errore Cloud, fallback su memoria locale:", err);
+        setCloudStatus("CLOUD: OFFLINE", "error");
+      }
     }
+
+    // 2. Se il Cloud è vuoto o offline, controlla il localStorage
+    const saved = localStorage.getItem("voicelive_setlist");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          songs = parsed;
+          renderSongsUI();
+          log(`Caricati ${songs.length} brani dalla memoria locale.`);
+          return;
+        }
+      } catch (e) {
+        songs = [];
+      }
+    }
+
+    // 3. Se anche localStorage è vuoto: carica scaletta_default.json dal repository
+    try {
+      log("Primo avvio: carico scaletta predefinita (.json)...");
+      const res = await fetch(`scaletta_default.json?t=${Date.now()}`);
+      if (res.ok) {
+        const defaultData = await res.json();
+        if (Array.isArray(defaultData) && defaultData.length > 0) {
+          songs = defaultData;
+          saveSongsToStorage();
+          renderSongsUI();
+          log(`Scaletta predefinita caricata (${songs.length} brani).`);
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn("Nessun scaletta_default.json trovato nel repository.");
+    }
+
+    // 4. Fallback estremo se non trova nulla
+    songs = [
+      { 
+        title: "Hotel California - Eagles", 
+        preset: 42, 
+        ytUrl: "", 
+        notes: "[00:02.00]Intro chitarra...\n[00:08.50]On a dark desert highway\n[00:12.00]Cool wind in my hair" 
+      }
+    ];
+    saveSongsToStorage();
+    renderSongsUI();
   }
 
   function saveSongsToStorage() {
@@ -1079,8 +1104,9 @@
     const selectedSong = songs[activeSongIndex];
 
     if (selectedSong) {
+      // Invia il Program Change tramite MidiManager
       MidiManager.sendProgramChange(selectedSong.preset - 1);
-      log(`BRANO CARICATO: ${selectedSong.title}`);
+      log(`BRANO CARICATO: ${selectedSong.title} (Preset ${selectedSong.preset})`);
 
       const queryGoogle = encodeURIComponent(`${selectedSong.title} lyrics testo`);
       lyricsBtn.href = `https://www.google.com/search?q=${queryGoogle}`;
